@@ -100,7 +100,7 @@ class pantryItem{
         return result.rows;
     }
 
-    static async findByUserId(id, userId) {
+    static async findByIdAndUserId(id, userId) {
         const result = await db.query(
             "SELECT * FROM pantry_items WHERE id = $1 AND user_id = $2",
             [id, userId]
