@@ -14,6 +14,7 @@ import RecipeDetail from './pages/RecipeDetail';
 import ShoppingList from './pages/ShoppingList';
 import Settings from './pages/Settings';
 import MealPlanner from './pages/MealPlanner';
+import Landing from './pages/Landing';
 
 function App() {
   return (
@@ -43,8 +44,8 @@ function App() {
           <Route path="/shopping-list" element={<ProtectedRoute><ShoppingList /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Root route */}
+          <Route path="/" element={<Landing />} />
         </Routes>
       </Router>
 

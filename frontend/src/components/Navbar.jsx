@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import {
-    ChefHat,
-    Home,
-    UtensilsCrossed,
-    Calendar,
-    ShoppingCart,
-    Settings,
-    LogOut,
-    ChevronDown
-} from 'lucide-react';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -32,81 +23,104 @@ const Navbar = () => {
     const handleLogout = () => {
         logout();
         setIsDropdownOpen(false);
-        navigate('/login');
+        navigate('/');
     };
 
+    const navLinks = [
+        { to: '/dashboard', label: 'Dashboard' },
+        { to: '/pantry', label: 'Pantry' },
+        { to: '/generate', label: 'Generate' },
+        { to: '/recipes', label: 'Recipes' },
+        { to: '/meal-plan', label: 'Meal Plan' },
+        { to: '/shopping-list', label: 'Shopping' },
+    ];
+
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 items-center gap-4">
-                    <Link
-                        to="/dashboard"
-                        className="flex items-center gap-2 text-gray-900 font-semibold hover:text-emerald-600 transition-colors flex-shrink-0"
-                    >
-                        <ChefHat className="w-6 h-6 text-emerald-500" />
-                        <span>AI Recipe Generator</span>
+        <>
+            <header className="bg-[#F7F2FA]/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm top-0 z-50 sticky w-full">
+                <div className="flex justify-between items-center h-20 px-8 max-w-7xl mx-auto w-full font-headline-md antialiased">
+                    <Link to="/dashboard" className="text-2xl font-black text-[#F45B00] tracking-tighter font-headline-md">
+                        MEALZENO
                     </Link>
+                    
+                    <nav className="hidden md:flex items-center gap-8 h-full">
+                        {navLinks.map((link) => {
+                            const isActive = location.pathname === link.to;
+                            return (
+                                <Link
+                                    key={link.to}
+                                    to={link.to}
+                                    className={`${
+                                        isActive 
+                                            ? 'text-[#F45B00] font-bold border-b-2 border-[#F45B00]' 
+                                            : 'text-zinc-500 font-medium hover:text-[#F45B00]'
+                                    } transition-colors h-full flex items-center px-1`}
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
 
-                    <div className="hidden md:flex flex-1 items-center justify-center gap-1">
-                        <NavLink to="/dashboard" icon={<Home className="w-4 h-4" />} label="Dashboard" />
-                        <NavLink to="/pantry" icon={<UtensilsCrossed className="w-4 h-4" />} label="Pantry" />
-                        <NavLink to="/generate" icon={<ChefHat className="w-4 h-4" />} label="Generate" />
-                        <NavLink to="/recipes" icon={<UtensilsCrossed className="w-4 h-4" />} label="Recipes" />
-                        <NavLink to="/meal-plan" icon={<Calendar className="w-4 h-4" />} label="Meal Plan" />
-                        <NavLink to="/shopping-list" icon={<ShoppingCart className="w-4 h-4" />} label="Shopping" />
-                    </div>
-
-                    <div className="relative ml-auto flex items-center gap-3" ref={dropdownRef}>
-                        <Link
-                            to="/settings"
-                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            aria-label="Settings"
+                    <div className="flex items-center gap-2 md:gap-4 relative" ref={dropdownRef}>
+                        <button 
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="p-2 text-zinc-500 hover:bg-zinc-50 transition-all duration-200 rounded-full active:scale-95 flex items-center gap-2"
                         >
-                            <Settings className="w-5 h-5" />
-                        </Link>
-
-                        <button
-                            type="button"
-                            onClick={() => setIsDropdownOpen((open) => !open)}
-                            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            aria-haspopup="menu"
-                            aria-expanded={isDropdownOpen}
-                        >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white font-semibold">
-                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                            </div>
-                            <span className="font-medium text-gray-900">{user?.name || 'User'}</span>
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                            <span className="material-symbols-outlined">account_circle</span>
+                            {user && <span className="hidden sm:inline text-sm font-medium text-zinc-700">{user.name}</span>}
                         </button>
 
                         {isDropdownOpen && (
-                            <div className="absolute right-0 top-14 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg py-2">
-                                <button
-                                    type="button"
-                                    onClick={handleLogout}
-                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            <div className="absolute right-0 top-14 z-50 w-48 rounded-xl border border-zinc-100 bg-white shadow-xl py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                <Link 
+                                    to="/settings" 
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+                                    onClick={() => setIsDropdownOpen(false)}
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <span className="material-symbols-outlined text-lg">settings</span>
+                                    Settings
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-lg">logout</span>
                                     Logout
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
-            </div>
-        </nav>
-    );
-};
+            </header>
 
-const NavLink = ({ to, icon, label }) => {
-    return (
-        <Link
-            to={to}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-        >
-            {icon}
-            <span>{label}</span>
-        </Link>
+            {/* Mobile Bottom Navigation */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md flex justify-around items-center px-4 pb-safe z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] border-t border-zinc-200">
+                {navLinks.slice(0, 5).map((link) => {
+                    const isActive = location.pathname === link.to;
+                    const icons = {
+                        '/dashboard': 'dashboard',
+                        '/pantry': 'inventory_2',
+                        '/generate': 'auto_awesome',
+                        '/recipes': 'restaurant_menu',
+                        '/meal-plan': 'calendar_today',
+                        '/shopping-list': 'shopping_cart'
+                    };
+                    return (
+                        <Link 
+                            key={link.to}
+                            to={link.to}
+                            className={`flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 ${
+                                isActive ? 'text-[#F45B00] scale-110' : 'text-zinc-400'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-2xl">{icons[link.to]}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">{link.label === 'Shopping' ? 'List' : link.label === 'Meal Plan' ? 'Plan' : link.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
+        </>
     );
 };
 

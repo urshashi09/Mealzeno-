@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { ChefHat, Mail, Lock, User } from 'lucide-react';
 
 const SignUp = () => {
     const [name, setName] = useState('');
@@ -29,19 +28,19 @@ const SignUp = () => {
     };
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-emerald-50 to-white flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#F7F2FA] flex items-center justify-center p-4 selection:bg-[#F45B00]/30">
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500 rounded-2xl mb-4">
-                        <ChefHat className="w-9 h-9 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-                    <p className="text-gray-600 mt-2">Start your culinary journey with AI Recipe Generator</p>
+                    <Link to="/" className="text-4xl font-black text-[#F45B00] tracking-tighter font-headline-md inline-block mb-4">
+                        MEALZENO
+                    </Link>
+                    <h1 className="text-3xl font-bold text-gray-900 font-headline-md">Create Account</h1>
+                    <p className="text-gray-600 mt-2">Join 12,000+ chefs and start planning</p>
                 </div>
 
                 {/* Sign Up Form */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
                         <div>
@@ -49,13 +48,13 @@ const SignUp = () => {
                                 Full Name
                             </label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">person</span>
                                 <input
                                     id="name"
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#F45B00] focus:border-[#F45B00] outline-none transition-all bg-gray-50/50"
                                     placeholder="John Doe"
                                     required
                                 />
@@ -68,13 +67,13 @@ const SignUp = () => {
                                 Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">mail</span>
                                 <input
                                     id="email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#F45B00] focus:border-[#F45B00] outline-none transition-all bg-gray-50/50"
                                     placeholder="you@example.com"
                                     required
                                 />
@@ -87,35 +86,35 @@ const SignUp = () => {
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">lock</span>
                                 <input
                                     id="password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#F45B00] focus:border-[#F45B00] outline-none transition-all bg-gray-50/50"
                                     placeholder="••••••••"
                                     required
                                     minLength={6}
                                 />
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+                            <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-wider">At least 6 characters</p>
                         </div>
 
                         {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[#F45B00] hover:bg-[#D44F00] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Creating account...' : 'Create Account'}
                         </button>
                     </form>
 
                     {/* Login Link */}
-                    <p className="text-center text-sm text-gray-600 mt-6">
+                    <p className="text-center text-sm text-gray-600 mt-8">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                        <Link to="/login" className="text-[#F45B00] font-bold hover:underline">
                             Sign in
                         </Link>
                     </p>

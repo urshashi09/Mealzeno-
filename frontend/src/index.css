@@ -1,57 +1,100 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import 'tailwindcss';
+@import "tailwindcss";
 
-/* Modern Minimal Design System with Tailwind */
+@theme {
+  --font-body-md: "Be Vietnam Pro";
+  --font-headline-lg: "Epilogue";
+  --font-headline-md: "Epilogue";
+  --font-label-sm: "Be Vietnam Pro";
+  --font-headline-xl: "Epilogue";
+  --font-body-lg: "Be Vietnam Pro";
+  --font-label-bold: "Be Vietnam Pro";
+
+  --color-on-tertiary: #ffffff;
+  --color-on-surface: #1b1b1f;
+  --color-error: #ba1a1a;
+  --color-surface-tint: #a63b00;
+  --color-surface-container-highest: #e4e1e7;
+  --color-surface-container: #f0edf2;
+  --color-on-secondary-fixed-variant: #4717ca;
+  --color-tertiary-fixed-dim: #4edea3;
+  --color-outline: #8f7065;
+  --color-inverse-on-surface: #f3f0f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary-container: #fffbff;
+  --color-on-secondary-container: #fffbff;
+  --color-primary-fixed: #ffdbce;
+  --color-tertiary-container: #00855b;
+  --color-primary-container: #cb4a00;
+  --color-tertiary-fixed: #6ffbbe;
+  --color-on-primary-fixed: #370e00;
+  --color-on-tertiary-container: #f5fff6;
+  --color-secondary: #5d39df;
+  --color-inverse-surface: #303034;
+  --color-secondary-container: #7757f9;
+  --color-surface-bright: #fbf8fe;
+  --color-outline-variant: #e3bfb1;
+  --color-on-tertiary-fixed-variant: #005236;
+  --color-on-error-container: #93000a;
+  --color-surface-variant: #e4e1e7;
+  --color-inverse-primary: #ffb598;
+  --color-on-surface-variant: #5a4137;
+  --color-on-tertiary-fixed: #002113;
+  --color-primary: #a23a00;
+  --color-on-background: #1b1b1f;
+  --color-surface: #fbf8fe;
+  --color-on-primary: #ffffff;
+  --color-background: #fbf8fe;
+  --color-surface-container-low: #f6f2f8;
+  --color-primary-fixed-dim: #ffb598;
+  --color-secondary-fixed: #e6deff;
+  --color-surface-dim: #dcd9de;
+  --color-on-secondary: #ffffff;
+  --color-surface-container-high: #eae7ed;
+  --color-on-primary-fixed-variant: #7f2b00;
+  --color-tertiary: #006947;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-secondary-fixed: #1c0062;
+  --color-secondary-fixed-dim: #cabeff;
+
+  --spacing-margin-mobile: 16px;
+  --spacing-stack-sm: 8px;
+  --spacing-container-max: 1280px;
+  --spacing-gutter: 24px;
+  --spacing-unit: 8px;
+  --spacing-stack-lg: 32px;
+  --spacing-margin-desktop: 40px;
+  --spacing-stack-md: 16px;
+
+  --font-size-body-md: 16px;
+  --font-size-headline-lg: 32px;
+  --font-size-headline-md: 24px;
+  --font-size-label-sm: 12px;
+  --font-size-headline-xl: 48px;
+  --font-size-body-lg: 18px;
+  --font-size-label-bold: 14px;
+}
 
 @layer base {
-  :root {
-    /* Primary Colors - Emerald */
-    --color-primary: 16 185 129;
-    --color-primary-dark: 5 150 105;
-    --color-primary-light: 52 211 153;
-  }
-
-  * {
-    @apply border-gray-200;
-  }
-
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background font-body-md text-on-background antialiased;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold text-gray-900;
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 }
 
 @layer components {
-
-  /* Custom scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    @apply bg-surface-container;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+    @apply bg-outline-variant rounded-full;
   }
 }
