@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { User, Lock, Trash2, Save } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { dummyUser } from '../data/dummyData';
+import api from '../services/api';
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Paleo'];
 const CUISINES = ['Any', 'Italian', 'Mexican', 'Indian', 'Chinese', 'Japanese', 'Thai', 'French', 'Mediterranean', 'American'];
@@ -12,13 +12,11 @@ const CUISINES = ['Any', 'Italian', 'Mexican', 'Indian', 'Chinese', 'Japanese', 
 const Settings = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const [saving] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Profile state
-    const [profile, setProfile] = useState({
-        name: dummyUser.name,
-        email: dummyUser.email
-    });
+    const [profile, setProfile] = useState({ name: '', email: '' });
 
     // Preferences state
     const [preferences, setPreferences] = useState({
@@ -36,19 +34,74 @@ const Settings = () => {
         confirmPassword: ''
     });
 
-    const handleProfileUpdate = (e) => {
+    const fetchUserData = useCallback(async () => {
+        try {
+            const response = await api.get('/user/profile');
+            // Backend returns { success, data: { user, preferences } }
+            const { user, preferences: userPrefs } = response.data.data;
+            setProfile({
+                name: user.name,
+                email: user.email
+            });
+            if (userPrefs) {
+                setPreferences({
+                    dietary_restrictions: userPrefs.dietary_restrictions || [],
+                    allergies: userPrefs.allergies || [],
+                    preferred_cuisines: userPrefs.preferred_cuisines || [],
+                    default_servings: userPrefs.default_servings || 4,
+                    // DB column is measurement_units (plural)
+                    measurement_unit: userPrefs.measurement_units || 'metric'
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            const msg = error?.response?.data?.message || error.message || 'Failed to load profile data';
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUserData();
+    }, [fetchUserData]);
+
+
+    const handleProfileUpdate = async (e) => {
         e.preventDefault();
-        // UI-only update
-        toast.success('Profile updated successfully');
+        setSaving(true);
+        try {
+            await api.put('/user/profile', profile);
+            toast.success('Profile updated successfully');
+            // Update local storage with new name
+            const stored = localStorage.getItem('user');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                localStorage.setItem('user', JSON.stringify({ ...parsed, ...profile }));
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            toast.error('Error updating profile');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handlePreferencesUpdate = (e) => {
+    const handlePreferencesUpdate = async (e) => {
         e.preventDefault();
-        // UI-only update
-        toast.success('Preferences updated successfully');
+        setSaving(true);
+        try {
+            await api.put('/user/preferences', preferences);
+            toast.success('Preferences updated successfully');
+        } catch (error) {
+            console.error('Error updating preferences:', error);
+            toast.error('Error updating preferences');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handlePasswordChange = (e) => {
+    const handlePasswordChange = async (e) => {
         e.preventDefault();
 
         if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -61,12 +114,23 @@ const Settings = () => {
             return;
         }
 
-        // UI-only password change
-        toast.success('Password changed successfully');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setSaving(true);
+        try {
+            await api.put('/user/change-password', {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+            toast.success('Password changed successfully');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            console.error('Error changing password:', error);
+            toast.error(error?.response?.data?.message || 'Error changing password');
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
             return;
         }
@@ -77,10 +141,15 @@ const Settings = () => {
             return;
         }
 
-        // UI-only delete
-        toast.success('Account deleted successfully');
-        logout();
-        navigate('/login');
+        try {
+            await api.delete('/user/delete-account');
+            toast.success('Account deleted successfully');
+            logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            toast.error('Error deleting account');
+        }
     };
 
     const toggleDietary = (option) => {
@@ -100,6 +169,17 @@ const Settings = () => {
                 : [...prev.preferred_cuisines, cuisine]
         }));
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex flex-1 items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -128,7 +208,7 @@ const Settings = () => {
                                 <input
                                     type="text"
                                     value={profile.name}
-                                    // onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                                     required
                                 />
@@ -140,10 +220,9 @@ const Settings = () => {
                                     type="email"
                                     value={profile.email}
                                     disabled
-                                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                                    required
+                                    className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg outline-none cursor-not-allowed"
                                 />
+                                <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                             </div>
 
                             <button

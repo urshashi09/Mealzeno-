@@ -1,24 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Plus, X, Check, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
-import { dummyShoppingListItems } from '../data/dummyData';
+import api from '../services/api';
 
-const CATEGORIES = ['Produce', 'Dairy', 'Meat', 'Grains', 'Spices', 'Beverages', 'Other'];
+
+const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Grains', 'Spices', 'Beverages', 'Other'];
 
 const ShoppingList = () => {
     const [items, setItems] = useState([]);
     const [groupedItems, setGroupedItems] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);
-
-    useEffect(() => {
-        loadShoppingList();
-    }, []);
-
-    const loadShoppingList = () => {
-        setItems(dummyShoppingListItems);
-        organizeByCategory(dummyShoppingListItems);
-    };
+    const [loading, setLoading] = useState(true);
 
     const organizeByCategory = (itemsList) => {
         const grouped = {};
@@ -32,34 +25,79 @@ const ShoppingList = () => {
         setGroupedItems(grouped);
     };
 
-    const handleToggleChecked = (id) => {
-        // UI-only toggle
+    const fetchShoppingList = useCallback(async () => {
+        try {
+            const response = await api.get('/shoppinglist?grouped=true');
+            const grouped = response.data.data.items || [];
+
+            const flatItems = [];
+            grouped.forEach(group => {
+                group.items.forEach(item => {
+                    flatItems.push({
+                        ...item,
+                        category: group.category
+                    });
+                });
+            });
+
+            setItems(flatItems);
+            organizeByCategory(flatItems);
+        } catch (error) {
+            console.error('Error fetching shopping list:', error);
+            toast.error('Error fetching shopping list');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchShoppingList();
+    }, [fetchShoppingList]);
+
+    const handleToggleChecked = async (id) => {
         const updatedItems = items.map(item =>
             item.id === id ? { ...item, is_checked: !item.is_checked } : item
         );
         setItems(updatedItems);
         organizeByCategory(updatedItems);
+        try{
+            await api.put(`/shoppinglist/${id}/toggle`);
+            toast.success('Item updated successfully');
+        } catch (error) {
+            console.error('Error updating item:', error);
+            toast.error('Error updating item');
+        }
     };
 
-    const handleDeleteItem = (id) => {
-        // UI-only delete
-        const updatedItems = items.filter(item => item.id !== id);
-        setItems(updatedItems);
-        organizeByCategory(updatedItems);
-        toast.success('Item removed');
+    const handleDeleteItem = async (id) => {
+        try{
+            await api.delete(`/shoppinglist/${id}`);
+            const updatedItems = items.filter(item => item.id !== id);
+            setItems(updatedItems);
+            organizeByCategory(updatedItems);
+            toast.success('Item deleted successfully');
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            toast.error('Error deleting item');
+        }
     };
 
-    const handleClearChecked = () => {
+    const handleClearChecked = async () => {
         if (!confirm('Remove all checked items?')) return;
 
-        // UI-only clear
-        const updatedItems = items.filter(item => !item.is_checked);
-        setItems(updatedItems);
-        organizeByCategory(updatedItems);
-        toast.success('Checked items cleared');
+        try{
+            await api.delete('/shoppinglist/clear/checked');
+            const updatedItems = items.filter(item => !item.is_checked);
+            setItems(updatedItems);
+            organizeByCategory(updatedItems);
+            toast.success('Checked items removed successfully');
+        } catch (error) {
+            console.error('Error removing checked items:', error);
+            toast.error('Error removing checked items');
+        }
     };
 
-    const handleAddToPantry = () => {
+    const handleAddToPantry = async () => {
         const checkedCount = items.filter(item => item.is_checked).length;
         if (checkedCount === 0) {
             toast.error('No items checked');
@@ -68,12 +106,29 @@ const ShoppingList = () => {
 
         if (!confirm(`Add ${checkedCount} checked items to pantry?`)) return;
 
-        // UI-only add to pantry
-        const updatedItems = items.filter(item => !item.is_checked);
-        setItems(updatedItems);
-        organizeByCategory(updatedItems);
-        toast.success('Items added to pantry');
+        try{
+            await api.post('/shoppinglist/add-to-pantry');
+            const updatedItems = items.filter(item => !item.is_checked);
+            setItems(updatedItems);
+            organizeByCategory(updatedItems);
+            toast.success('Checked items added to pantry successfully');
+        } catch (error) {
+            console.error('Error adding checked items to pantry:', error);
+            toast.error('Error adding checked items to pantry');
+        }
     };
+
+
+    if(loading){
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex flex-1 items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            </div>
+        )
+    }
 
     const checkedCount = items.filter(item => item.is_checked).length;
     const totalCount = items.length;
@@ -160,16 +215,23 @@ const ShoppingList = () => {
 
             {/* Add Item Modal */}
             {showAddModal && (
-                <AddItemModal
-                    onClose={() => setShowAddModal(false)}
-                    onSuccess={(newItem) => {
-                        // Add to local state
-                        const updatedItems = [...items, newItem];
-                        setItems(updatedItems);
-                        organizeByCategory(updatedItems);
+            <AddItemModal
+                onClose={() => setShowAddModal(false)}
+                onSuccess={(newItem) => {
+                    if (!newItem) {
+                        fetchShoppingList();
                         setShowAddModal(false);
-                    }}
-                />
+                        return;
+                    }
+
+                    setItems((prevItems) => {
+                        const updatedItems = [...prevItems, newItem];
+                        organizeByCategory(updatedItems);
+                        return updatedItems;
+                    });
+                    setShowAddModal(false);
+                }}
+            />
             )}
         </div>
     );
@@ -221,24 +283,25 @@ const AddItemModal = ({ onClose, onSuccess }) => {
     });
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit =async(e) => {
         e.preventDefault();
 
-        // UI-only add
-        const newItem = {
-            id: Date.now(),
-            ingredient_name: formData.ingredient_name,
-            quantity: parseFloat(formData.quantity),
-            unit: formData.unit,
-            category: formData.category,
-            is_checked: false,
-            from_meal_plan: false,
-            created_at: new Date().toISOString()
-        };
-
-        toast.success('Item added to shopping list');
-        onSuccess(newItem);
-        onClose();
+        setLoading(true);
+        try{
+            const response = await api.post("/shoppinglist", {
+                ...formData,
+                quantity: parseFloat(formData.quantity)
+            });
+            const newItem = response.data.data.item;
+            toast.success('Item added to shopping list');
+            await onSuccess(newItem);
+            onClose();
+        } catch {
+            console.error('Error adding item to shopping list');
+            toast.error("Failed to add item to shopping list");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

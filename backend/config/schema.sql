@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS meal_plans (
 );
 
 --SHOPPING LIST TABLE
-CREATE TABLE IF NOT EXISTS shopping_list (
+CREATE TABLE IF NOT EXISTS shopping_list_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     ingredient_name VARCHAR(255) NOT NULL,
@@ -123,7 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_recipes_cuisine ON recipes(cuisine_type);
 
 CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON meal_plans(user_id, meal_date);
 
-CREATE INDEX IF NOT EXISTS idx_shopping_list_user ON shopping_list(user_id);
+CREATE INDEX IF NOT EXISTS idx_shopping_list_items_user ON shopping_list_items(user_id);
 
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -165,8 +165,8 @@ BEFORE UPDATE ON meal_plans
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_shopping_list_updated_at ON shopping_list;
-CREATE TRIGGER update_shopping_list_updated_at
-BEFORE UPDATE ON shopping_list
+DROP TRIGGER IF EXISTS update_shopping_list_items_updated_at ON shopping_list_items;
+CREATE TRIGGER update_shopping_list_items_updated_at
+BEFORE UPDATE ON shopping_list_items
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();

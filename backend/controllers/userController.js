@@ -9,9 +9,9 @@ export const getProfile = async (req, res,next) => {
         const preferences = await userPreference.findByUserId(userId);
 
         res.status(200).json({ 
+            success: true,
             message: 'Profile retrieved successfully',
-            user: userData, 
-            preferences 
+            data: { user: userData, preferences }
         });
     } catch (error) {
         next(error);
@@ -38,12 +38,20 @@ export const updateProfile = async (req, res,next) => {
 export const updatePreferences = async (req, res,next) => {
     try {
         const userId = req.user.id;
-        const preferences = req.body;
+        const body = req.body;
 
-        const updatedPreferences = await userPreference.upsert(userId, preferences);
+        // Normalize measurement field — frontend may send either name
+        const normalized = {
+            ...body,
+            measurement_units: body.measurement_units || body.measurement_unit || 'metric'
+        };
+        delete normalized.measurement_unit;
+
+        const updatedPreferences = await userPreference.upsert(userId, normalized);
         res.status(200).json({ 
+            success: true,
             message: 'Preferences updated successfully',
-            preferences: updatedPreferences 
+            data: { preferences: updatedPreferences }
         });
     }
     catch (error) {
