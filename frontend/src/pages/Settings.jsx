@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { User, Lock, Trash2, Save } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { dummyUser, dummyPreferences } from '../data/dummyData';
+import { dummyUser } from '../data/dummyData';
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Paleo'];
 const CUISINES = ['Any', 'Italian', 'Mexican', 'Indian', 'Chinese', 'Japanese', 'Thai', 'French', 'Mediterranean', 'American'];
 
 const Settings = () => {
-    const { user, logout } = useAuth();
+    const { logout } = useAuth();
     const navigate = useNavigate();
-    const [saving, setSaving] = useState(false);
+    const [saving] = useState(false);
 
     // Profile state
     const [profile, setProfile] = useState({
-        name: '',
-        email: ''
+        name: dummyUser.name,
+        email: dummyUser.email
     });
 
     // Preferences state
@@ -35,25 +35,6 @@ const Settings = () => {
         newPassword: '',
         confirmPassword: ''
     });
-
-    useEffect(() => {
-        loadUserData();
-    }, []);
-
-    const loadUserData = () => {
-        setProfile({
-            name: dummyUser.name,
-            email: dummyUser.email
-        });
-
-        setPreferences({
-            dietary_restrictions: dummyPreferences.dietary_restrictions || [],
-            allergies: dummyPreferences.allergies || [],
-            preferred_cuisines: dummyPreferences.preferred_cuisines || [],
-            default_servings: dummyPreferences.default_servings || 4,
-            measurement_unit: dummyPreferences.measurement_unit || 'metric'
-        });
-    };
 
     const handleProfileUpdate = (e) => {
         e.preventDefault();
@@ -263,7 +244,7 @@ const Settings = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Allergies (comma-separated)</label>
                                 <input
                                     type="text"
-                                    value={preferences.allergies.join(', ')}
+                                    value={Array.isArray(preferences.allergies) ? preferences.allergies.join(', ') : ''}
                                     onChange={(e) => setPreferences({
                                         ...preferences,
                                         allergies: e.target.value.split(',').map(a => a.trim()).filter(Boolean)

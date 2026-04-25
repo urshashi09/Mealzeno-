@@ -16,7 +16,7 @@ export  const generateRecipe= async (req, res,next) => {
             cooking_time= "medium"
         }= req.body
 
-        let finalIngredients = [...ingredients]
+        let finalIngredients = Array.isArray(ingredients) ? [...ingredients] : [];
 
         if(usePantryIngredients){
             const pantryItems = await pantryItem.findByUserId(userId);
@@ -32,12 +32,13 @@ export  const generateRecipe= async (req, res,next) => {
         }
 
 
-        const generatedRecipe = await generateRecipeAI(
-            {finalIngredients, 
-            dietary_restrictions, 
-            cuisine_type, 
-            servings, 
-            cooking_time});
+        const generatedRecipe = await generateRecipeAI({
+            ingredients: finalIngredients,
+            dietaryRestrictions: dietary_restrictions,
+            cuisineType: cuisine_type,
+            servings,
+            cookTime: cooking_time
+        });
 
         res.json({
             success: true,
