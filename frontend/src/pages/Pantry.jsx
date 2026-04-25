@@ -1,31 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, X, Calendar, AlertCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { dummyPantryItems, getExpiringItems } from '../data/dummyData';
+import api from '../services/api';
 
 const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Grains', 'Spices', 'Other'];
 
 const Pantry = () => {
     const [items, setItems] = useState([]);
-    const [filteredItems, setFilteredItems] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [expiringItems, setExpiringItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchPantryItems = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/pantry');
+            setItems(response.data.data.items);
+        } catch (error) {
+            console.error('Error fetching pantry items:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchExpiringItems = async () => {
+        try {
+            const response = await api.get('/pantry/expiring-soon?days=7');
+            setExpiringItems(response.data.data.items);
+        } catch (error) {
+            console.error('Error fetching expiring items:', error);
+        }
+    };
 
     useEffect(() => {
-        // Load dummy data
-        setItems(dummyPantryItems);
-        setExpiringItems(getExpiringItems());
+        fetchPantryItems();
+        fetchExpiringItems();
     }, []);
 
-    useEffect(() => {
-        filterItems();
-    }, [items, searchQuery, selectedCategory]);
-
-    const filterItems = () => {
+    const filteredItems = useMemo(() => {
         let filtered = items;
 
         if (searchQuery) {
@@ -38,16 +54,32 @@ const Pantry = () => {
             filtered = filtered.filter(item => item.category === selectedCategory);
         }
 
-        setFilteredItems(filtered);
-    };
+        return filtered;
+    }, [items, searchQuery, selectedCategory]);
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this item?')) return;
 
-        // UI-only delete (no API call)
-        setItems(items.filter(item => item.id !== id));
-        toast.success('Item deleted');
+        try{
+            await api.delete(`/pantry/${id}`);
+            setItems(items.filter(item => item.id !== id));
+            toast.success('Item deleted successfully');
+            
+        } catch (error) {
+            console.error('Error deleting item:', error);
+        } 
     };
+
+    if(loading){
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex flex-1 items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -141,9 +173,9 @@ const Pantry = () => {
             {showAddModal && (
                 <AddItemModal
                     onClose={() => setShowAddModal(false)}
-                    onSuccess={(newItem) => {
-                        setItems([...items, newItem]);
-                        setExpiringItems(getExpiringItems());
+                    onSuccess={() => {
+                        fetchPantryItems();
+                        fetchExpiringItems();
                     }}
                 />
             )}
@@ -190,14 +222,14 @@ const PantryItemCard = ({ item, onDelete, isExpiring }) => {
                     </span>
                 </div>
 
-                {item.expiry_date && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className={`${isExpired ? 'text-red-600 font-medium' : isExpiring ? 'text-amber-600 font-medium' : 'text-gray-600'}`}>
-                            {isExpired ? 'Expired' : 'Expires'}: {format(new Date(item.expiry_date), 'MMM dd, yyyy')}
-                        </span>
-                    </div>
-                )}
+                <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className={`${item.expiry_date ? (isExpired ? 'text-red-600 font-medium' : isExpiring ? 'text-amber-600 font-medium' : 'text-gray-600') : 'text-gray-500'}`}>
+                        {item.expiry_date
+                            ? `${isExpired ? 'Expired' : 'Expires'}: ${format(new Date(item.expiry_date), 'MMM dd, yyyy')}`
+                            : 'Expiry date not set'}
+                    </span>
+                </div>
 
                 {item.is_running_low && (
                     <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded">
@@ -220,22 +252,25 @@ const AddItemModal = ({ onClose, onSuccess }) => {
     });
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
 
-        // UI-only add (no API call)
-        const newItem = {
-            id: Date.now(),
-            user_id: 1,
-            ...formData,
-            quantity: parseFloat(formData.quantity),
-            expiry_date: formData.expiry_date || null,
-            created_at: new Date().toISOString()
-        };
-
-        toast.success('Item added to pantry');
-        onSuccess(newItem);
-        onClose();
+        try{
+            await api.post("/pantry", {
+                ...formData,
+                quantity: parseFloat(formData.quantity),
+                expiryDate: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : null
+            });
+            toast.success('Item added to pantry');
+            onSuccess();
+            onClose();
+        } catch (error) {
+            console.error('Error adding pantry item:', error);
+            toast.error("Failed to add item to pantry");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

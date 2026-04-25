@@ -7,11 +7,11 @@ class MealPlan {
         const date = planned_date || meal_date
 
         const result = await db.query(
-            `INSERT INTO meal_plans (user_id, recipe_id,meal_type)
-             VALUES ($1, $2, $3:: date, $4)
+            `INSERT INTO meal_plans (user_id, recipe_id, meal_date, meal_type)
+             VALUES ($1, $2, $3::date, $4)
              ON CONFLICT (user_id, meal_date, meal_type) 
-             DO UPDATE SET recipe_id= $2
-                RETURNING *`,
+             DO UPDATE SET recipe_id = $2
+             RETURNING *`,
             [userId, recipe_id, date, meal_type]
         );
         return result.rows[0];
@@ -54,7 +54,7 @@ class MealPlan {
                 JOIN recipes r ON mp.recipe_id = r.id
                 WHERE mp.user_id = $1 
                 AND mp.meal_date >= CURRENT_DATE
-                ORDER BY mp.meal_date ASC
+                ORDER BY mp.meal_date ASC,
                 CASE mp.meal_type
                     WHEN 'breakfast' THEN 1
                     WHEN 'lunch' THEN 2
@@ -67,7 +67,7 @@ class MealPlan {
     }
 
     static async delete(id, userId) {
-        await db.query(
+        const result = await db.query(
             "DELETE FROM meal_plans WHERE id = $1 AND user_id = $2 RETURNING *",
             [id, userId]
           );

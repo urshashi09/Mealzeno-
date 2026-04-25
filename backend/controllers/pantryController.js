@@ -1,4 +1,3 @@
-import { parse } from "dotenv";
 import pantryItem from "../models/pantryItem.js";
 
 
@@ -32,7 +31,7 @@ export const getPantryStat= async (req, res,next) => {
         res.status(200).json({
             success: true,
             message: 'Pantry statistics retrieved successfully',
-            data: stats
+            data: { stats }
         });
     } catch (error) {
         next(error);

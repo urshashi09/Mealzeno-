@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { dummyUser } from '../data/dummyData';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react';
 import api from "../services/api"
 
 const AuthContext = createContext(null);
@@ -13,18 +13,23 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState(() => {
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
 
-    useEffect(() => {
-        const token= localStorage.getItem('token');
-        const savedUser= localStorage.getItem('user');
-
-        if (token && savedUser) {
-            setUser(JSON.parse(savedUser));
+        if (!token || !savedUser) {
+            return null;
         }
-        setLoading(false);
-    }, []);
+
+        try {
+            return JSON.parse(savedUser);
+        } catch {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            return null;
+        }
+    });
+    const [loading] = useState(false);
 
     const login = async (email, password) => {
         try{

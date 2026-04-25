@@ -2,27 +2,54 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { ChefHat, UtensilsCrossed, Calendar, ShoppingCart, TrendingUp, Clock } from 'lucide-react';
-import { dummyStats, getRecentRecipes, getUpcomingMeals } from '../data/dummyData';
+import api from '../services/api';
+
+
 
 const Dashboard = () => {
-    const [stats, setStats] = useState({
-        totalRecipes: 0,
-        pantryItems: 0,
-        mealsThisWeek: 0
-    });
+    const [stats, setStats] = useState(null);
     const [recentRecipes, setRecentRecipes] = useState([]);
     const [upcomingMeals, setUpcomingMeals] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    async function fetchDashboardData() {
+        try {
+            const [recipesRes, pantryRes, mealPlanRes, recentRes, upcomingRes] = await Promise.all([
+                api.get('/recipe/stats'),
+                api.get('/pantry/stats'),
+                api.get('/mealplan/stats'),
+                api.get('/recipe/recents'),
+                api.get('/mealplan/upcoming?limit=5')
+            ])
+            setStats({
+                totalRecipes: Number(recipesRes.data.data.stats.total_recipes) || 0,
+                pantryItems: Number(pantryRes.data.data.stats.total_items) || 0,
+                mealsThisWeek: Number(mealPlanRes.data.data.stats.this_week_count) || 0
+            })
+
+            setRecentRecipes(recentRes.data.data.recipes || []);
+            setUpcomingMeals(upcomingRes.data.data.meals || []);
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
-        // Load dummy data
-        setStats({
-            totalRecipes: dummyStats.recipes.total_recipes,
-            pantryItems: dummyStats.pantry.total_items,
-            mealsThisWeek: dummyStats.mealPlans.this_week_count
-        });
-        setRecentRecipes(getRecentRecipes(5));
-        setUpcomingMeals(getUpcomingMeals(5));
+        fetchDashboardData();
     }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex flex-1 items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -40,19 +67,22 @@ const Dashboard = () => {
                     <StatCard
                         icon={<ChefHat className="w-6 h-6" />}
                         label="Total Recipes"
-                        value={stats.totalRecipes}
+                        value={stats?.totalRecipes}
+                        loading={loading}
                         color="emerald"
                     />
                     <StatCard
                         icon={<UtensilsCrossed className="w-6 h-6" />}
                         label="Pantry Items"
-                        value={stats.pantryItems}
+                        value={stats?.pantryItems}
+                        loading={loading}
                         color="blue"
                     />
                     <StatCard
                         icon={<Calendar className="w-6 h-6" />}
                         label="Meals This Week"
-                        value={stats.mealsThisWeek}
+                        value={stats?.mealsThisWeek}
+                        loading={loading}
                         color="purple"
                     />
                 </div>

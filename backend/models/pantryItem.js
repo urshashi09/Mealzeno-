@@ -44,8 +44,8 @@ class pantryItem{
 
 
     static async create(userId, itemData){
-        const { name, quantity, unit, category , expiryDate , is_running_low} = itemData;
-        const normalizedExpiryDate = normalizeExpiryDate(expiryDate);
+        const { name, quantity, unit, category, expiryDate, expiry_date, is_running_low } = itemData;
+        const normalizedExpiryDate = normalizeExpiryDate(expiryDate ?? expiry_date);
 
         const result = await db.query(
             `INSERT INTO pantry_items (user_id, name, quantity, unit, category, expiry_date, is_running_low)
@@ -110,8 +110,8 @@ class pantryItem{
 
 
     static async update(id, userId, updates) {
-        const { name, quantity, unit, category, expiryDate, is_running_low } = updates;
-        const normalizedExpiryDate = normalizeExpiryDate(expiryDate);
+        const { name, quantity, unit, category, expiryDate, expiry_date, is_running_low } = updates;
+        const normalizedExpiryDate = normalizeExpiryDate(expiryDate ?? expiry_date);
         const result = await db.query(
             `UPDATE pantry_items SET
              name = COALESCE($1, name),
