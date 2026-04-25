@@ -9,6 +9,7 @@ import * as shoppinglistController from '../controllers/shoplistController.js'
 router.use(authMiddleware)
 
 router.get("/", shoppinglistController.getShoppingList)
+router.get("/download", shoppinglistController.downloadShoppingListPDF)
 
 // Static routes MUST come before /:id wildcard routes
 router.post("/generate", shoppinglistController.generateFromMealPlan)

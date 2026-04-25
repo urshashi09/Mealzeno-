@@ -161,7 +161,13 @@ const Dashboard = () => {
                     <div className="bg-white rounded-xl border border-gray-200 p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Upcoming Meals</h2>
-                            <Link to="/meal-plan" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                            <Link
+                                to={upcomingMeals.length > 0
+                                    ? `/meal-plan?weekStart=${upcomingMeals[0].meal_date}`
+                                    : '/meal-plan'
+                                }
+                                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                            >
                                 View calendar
                             </Link>
                         </div>

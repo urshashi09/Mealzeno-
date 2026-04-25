@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, X, ChefHat } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import { format, startOfWeek, addDays } from 'date-fns';
@@ -10,7 +11,17 @@ const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const MealPlanner = () => {
-    const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
+    const [searchParams] = useSearchParams();
+    const [weekStart, setWeekStart] = useState(() => {
+        const weekStartParam = searchParams.get('weekStart');
+        if (weekStartParam) {
+            const parsedDate = new Date(weekStartParam);
+            if (!Number.isNaN(parsedDate.getTime())) {
+                return startOfWeek(parsedDate);
+            }
+        }
+        return startOfWeek(new Date());
+    });
     const [mealPlan, setMealPlan] = useState({});
     const [recipes, setRecipes] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -60,6 +71,17 @@ const MealPlanner = () => {
         fetchMealPlan();
         fetchRecipes();
     }, [fetchMealPlan, fetchRecipes]);
+
+    useEffect(() => {
+        const weekStartParam = searchParams.get('weekStart');
+        if (!weekStartParam) return;
+
+        const parsedDate = new Date(weekStartParam);
+        if (!Number.isNaN(parsedDate.getTime())) {
+            setWeekStart(startOfWeek(parsedDate));
+            setActiveWeekButton('this');
+        }
+    }, [searchParams]);
 
     const handleAddMeal = (date, mealType) => {
         setSelectedSlot({ date, mealType });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Plus, X, Check, Trash2 } from 'lucide-react';
+import { ShoppingCart, Plus, X, Check, Trash2, FileDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -12,14 +12,13 @@ const ShoppingList = () => {
     const [groupedItems, setGroupedItems] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [downloadingPDF, setDownloadingPDF] = useState(false);
 
     const organizeByCategory = (itemsList) => {
         const grouped = {};
         itemsList.forEach(item => {
             const category = item.category || 'Other';
-            if (!grouped[category]) {
-                grouped[category] = [];
-            }
+            if (!grouped[category]) grouped[category] = [];
             grouped[category].push(item);
         });
         setGroupedItems(grouped);
@@ -33,10 +32,7 @@ const ShoppingList = () => {
             const flatItems = [];
             grouped.forEach(group => {
                 group.items.forEach(item => {
-                    flatItems.push({
-                        ...item,
-                        category: group.category
-                    });
+                    flatItems.push({ ...item, category: group.category });
                 });
             });
 
@@ -60,7 +56,7 @@ const ShoppingList = () => {
         );
         setItems(updatedItems);
         organizeByCategory(updatedItems);
-        try{
+        try {
             await api.put(`/shoppinglist/${id}/toggle`);
             toast.success('Item updated successfully');
         } catch (error) {
@@ -70,7 +66,7 @@ const ShoppingList = () => {
     };
 
     const handleDeleteItem = async (id) => {
-        try{
+        try {
             await api.delete(`/shoppinglist/${id}`);
             const updatedItems = items.filter(item => item.id !== id);
             setItems(updatedItems);
@@ -84,8 +80,7 @@ const ShoppingList = () => {
 
     const handleClearChecked = async () => {
         if (!confirm('Remove all checked items?')) return;
-
-        try{
+        try {
             await api.delete('/shoppinglist/clear/checked');
             const updatedItems = items.filter(item => !item.is_checked);
             setItems(updatedItems);
@@ -99,14 +94,9 @@ const ShoppingList = () => {
 
     const handleAddToPantry = async () => {
         const checkedCount = items.filter(item => item.is_checked).length;
-        if (checkedCount === 0) {
-            toast.error('No items checked');
-            return;
-        }
-
+        if (checkedCount === 0) { toast.error('No items checked'); return; }
         if (!confirm(`Add ${checkedCount} checked items to pantry?`)) return;
-
-        try{
+        try {
             await api.post('/shoppinglist/add-to-pantry');
             const updatedItems = items.filter(item => !item.is_checked);
             setItems(updatedItems);
@@ -118,8 +108,33 @@ const ShoppingList = () => {
         }
     };
 
+    const handleDownloadPDF = async () => {
+        setDownloadingPDF(true);
+        try {
+            const response = await api.get('/shoppinglist/download', {
+                responseType: 'blob'
+            });
+            const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'shopping-list.pdf';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            toast.success('PDF downloaded!');
+        } catch (error) {
+            if (error.response?.status === 400) {
+                toast.error('No unchecked items to download');
+            } else {
+                toast.error('Failed to download PDF');
+            }
+        } finally {
+            setDownloadingPDF(false);
+        }
+    };
 
-    if(loading){
+    if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Navbar />
@@ -127,7 +142,7 @@ const ShoppingList = () => {
                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
-        )
+        );
     }
 
     const checkedCount = items.filter(item => item.is_checked).length;
@@ -142,7 +157,9 @@ const ShoppingList = () => {
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-900">Shopping List</h1>
                     <p className="text-gray-600 mt-1">
-                        {totalCount > 0 ? `${checkedCount} of ${totalCount} items checked` : 'Your shopping list is empty'}
+                        {totalCount > 0
+                            ? `${checkedCount} of ${totalCount} items checked`
+                            : 'Your shopping list is empty'}
                     </p>
                 </div>
 
@@ -156,6 +173,18 @@ const ShoppingList = () => {
                             <Plus className="w-5 h-5" />
                             Add Item
                         </button>
+
+                        <button
+                            onClick={handleDownloadPDF}
+                            disabled={downloadingPDF}
+                            className="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {downloadingPDF
+                                ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                : <FileDown className="w-5 h-5" />}
+                            {downloadingPDF ? 'Downloading...' : 'Download List'}
+                        </button>
+
                         {checkedCount > 0 && (
                             <>
                                 <button
@@ -215,23 +244,22 @@ const ShoppingList = () => {
 
             {/* Add Item Modal */}
             {showAddModal && (
-            <AddItemModal
-                onClose={() => setShowAddModal(false)}
-                onSuccess={(newItem) => {
-                    if (!newItem) {
-                        fetchShoppingList();
+                <AddItemModal
+                    onClose={() => setShowAddModal(false)}
+                    onSuccess={(newItem) => {
+                        if (!newItem) {
+                            fetchShoppingList();
+                            setShowAddModal(false);
+                            return;
+                        }
+                        setItems((prevItems) => {
+                            const updatedItems = [...prevItems, newItem];
+                            organizeByCategory(updatedItems);
+                            return updatedItems;
+                        });
                         setShowAddModal(false);
-                        return;
-                    }
-
-                    setItems((prevItems) => {
-                        const updatedItems = [...prevItems, newItem];
-                        organizeByCategory(updatedItems);
-                        return updatedItems;
-                    });
-                    setShowAddModal(false);
-                }}
-            />
+                    }}
+                />
             )}
         </div>
     );
@@ -240,10 +268,7 @@ const ShoppingList = () => {
 const ShoppingListItem = ({ item, onToggle, onDelete }) => {
     return (
         <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors group">
-            <button
-                onClick={() => onToggle(item.id)}
-                className="shrink-0"
-            >
+            <button onClick={() => onToggle(item.id)} className="shrink-0">
                 <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${item.is_checked
                     ? 'bg-emerald-500 border-emerald-500'
                     : 'border-gray-300 hover:border-emerald-500'
@@ -283,12 +308,11 @@ const AddItemModal = ({ onClose, onSuccess }) => {
     });
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit =async(e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
         setLoading(true);
-        try{
-            const response = await api.post("/shoppinglist", {
+        try {
+            const response = await api.post('/shoppinglist', {
                 ...formData,
                 quantity: parseFloat(formData.quantity)
             });
@@ -298,7 +322,7 @@ const AddItemModal = ({ onClose, onSuccess }) => {
             onClose();
         } catch {
             console.error('Error adding item to shopping list');
-            toast.error("Failed to add item to shopping list");
+            toast.error('Failed to add item to shopping list');
         } finally {
             setLoading(false);
         }
