@@ -29,7 +29,10 @@ app.use("/api/recipe", recipeRoutes)
 app.use("/api/mealplan", mealPlanRoutes)
 app.use("/api/shoppinglist", shoppingListRoutes)
 
-
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: err.message || "Internal Server Error" });
+});
 
 
 app.listen(process.env.PORT, ()=>{

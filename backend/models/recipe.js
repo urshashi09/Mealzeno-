@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 
-class recipe {
+class Recipe {
 
     static async create(userId, recipeData) {
         const client = await db.pool.connect();
@@ -28,7 +28,20 @@ class recipe {
                 `INSERT INTO recipes (user_id, name, description, cuisine_type, difficulty, prep_time, cook_time, servings, instructions, dietary_tags, user_notes, image_url)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                  RETURNING *`,
-                [userId, name, description, cuisine_type, difficulty, prep_time, cook_time, servings, instructions, dietary_tags, user_notes, image_url]
+                [
+                    userId,
+                    name,
+                    description,
+                    cuisine_type,
+                    difficulty,
+                    prep_time,
+                    cook_time,
+                    servings,
+                    JSON.stringify(instructions),
+                    dietary_tags,
+                    user_notes,
+                    image_url
+                ]
             );
 
             const recipe = recipeResult.rows[0];
@@ -105,7 +118,7 @@ class recipe {
 
         if (filters.search) {
             paramCount++;
-            query += ` AND r.name ILIKE $${paramCount} OR r.description ILIKE $${paramCount}`;
+            query += ` AND (r.name ILIKE $${paramCount} OR r.description ILIKE $${paramCount})`;
             params.push(`%${filters.search}%`);
         }
 
@@ -123,7 +136,7 @@ class recipe {
 
         if (filters.dietary_tags) {
             paramCount++;
-            query += `AND $${paramCount} = ANY (r.dietary_tags)`;
+            query += ` AND $${paramCount} = ANY (r.dietary_tags)`;
             params.push(filters.dietary_tags);
         }
 
@@ -228,7 +241,7 @@ class recipe {
             `SELECT
                     COUNT(*) AS total_recipes,
                     COUNT(DISTINCT cuisine_type) AS cuisine_types_count,
-                    AVG(cook_time) AS avg_cook_time,
+                    AVG(cook_time) AS avg_cook_time
                 FROM recipes
                 WHERE user_id = $1`,
             [userId]
@@ -236,4 +249,4 @@ class recipe {
         return result.rows[0];
     }
 }
-export default recipe;
+export default Recipe;

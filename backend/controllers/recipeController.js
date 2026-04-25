@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 import pantryItem from "../models/pantryItem.js";
-import recipe from "../models/recipe.js";
+import Recipe from "../models/recipe.js";
 
 import {generateRecipe as generateRecipeAI, generatePantrySuggestions} from "../utils/gemini.js"
 
@@ -32,7 +32,7 @@ export  const generateRecipe= async (req, res,next) => {
         }
 
 
-        const recipe = await generateRecipeAI(
+        const generatedRecipe = await generateRecipeAI(
             {finalIngredients, 
             dietary_restrictions, 
             cuisine_type, 
@@ -42,7 +42,7 @@ export  const generateRecipe= async (req, res,next) => {
         res.json({
             success: true,
             message: "Recipe generated successfully",
-            data: {recipe}
+            data: {recipe: generatedRecipe}
         });
     } catch (error) {
         next(error);
@@ -76,12 +76,12 @@ export const getPantrySuggestions= async (req, res, next) => {
 export const saveRecipe = async (req, res,next) => {
     try {
         const userId = req.user.id;
-        const recipe= await recipe.create(userId, req.body);
+        const savedRecipe = await Recipe.create(userId, req.body);
 
         res.status(201).json({
             success: true,
             message: "Recipe saved successfully",
-            data: {recipe}
+            data: {recipe: savedRecipe}
         });
     } catch (error) {
         next(error);
@@ -104,7 +104,7 @@ export const getRecipes = async (req, res,next) => {
             limit,
             offset }= req.query
 
-            const recipes= await recipe.findByUserId(userId, {
+            const recipes= await Recipe.findByUserId(userId, {
                 search,
                 cuisine_type,
                 difficulty,
@@ -132,7 +132,7 @@ export const getRecentRecipes = async (req, res,next) => {
         const userId = req.user.id;
         const limit = parseInt(req.query.limit) || 5;
 
-        const recipes = await recipe.getRecent(userId, limit);
+        const recipes = await Recipe.getRecent(userId, limit);
 
         res.status(200).json({
             success: true,
@@ -148,8 +148,8 @@ export const getRecentRecipes = async (req, res,next) => {
 export const getRecipeById = async (req, res,next) => {
     try {
         const {id}= req.params;
-        const recipe = await recipe.findById(id, req.user.id);
-        if(!recipe){
+        const foundRecipe = await Recipe.findById(id, req.user.id);
+        if(!foundRecipe){
             return res.status(404).json({
                 success: false,
                 message: "Recipe not found"
@@ -159,7 +159,7 @@ export const getRecipeById = async (req, res,next) => {
         res.status(200).json({
             success: true,
             message: "Recipe retrieved successfully",
-            data: {recipe}
+            data: {recipe: foundRecipe}
         });
     }   catch (error) {
         next(error);
@@ -172,9 +172,9 @@ export const updateRecipe = async (req, res,next) => {
     try {
         const {id}= req.params;
 
-    const recipe= await recipe.update(id, req.user.id, req.body);
+    const updatedRecipe = await Recipe.update(id, req.user.id, req.body);
 
-        if(!recipe){
+        if(!updatedRecipe){
             return res.status(404).json({
                 success: false,
                 message: "Recipe not found or you do not have permission to update it"
@@ -184,7 +184,7 @@ export const updateRecipe = async (req, res,next) => {
         res.status(200).json({
             success: true,
             message: "Recipe updated successfully",
-            data: {recipe}
+            data: {recipe: updatedRecipe}
         });
     }   catch (error) {
         next(error);
@@ -196,9 +196,9 @@ export const deleteRecipe = async (req, res,next) => {
     try {
         const {id}= req.params;
 
-        const recipe= await recipe.delete(id, req.user.id);
+        const deletedRecipe = await Recipe.delete(id, req.user.id);
 
-        if(!recipe){
+        if(!deletedRecipe){
             return res.status(404).json({
                 success: false,
                 message: "Recipe not found or you do not have permission to delete it"
@@ -217,7 +217,7 @@ export const deleteRecipe = async (req, res,next) => {
 export const getStats = async (req, res,next) => {
     try {
         const userId = req.user.id;
-        const stats = await recipe.getStats(userId);
+        const stats = await Recipe.getStats(userId);
 
         res.status(200).json({
             success: true,

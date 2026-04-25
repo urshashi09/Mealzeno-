@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS recipe_nutrition (
     calories INTEGER,
     protein DECIMAL(10, 2),
     carbs DECIMAL(10, 2),
-    fat DECIMAL(10, 2),
+    fats DECIMAL(10, 2),
+    fiber DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     unique (recipe_id)
 );
@@ -134,31 +135,37 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
 BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_preferences_updated_at ON user_preferences;
 CREATE TRIGGER update_user_preferences_updated_at
 BEFORE UPDATE ON user_preferences
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_pantry_items_updated_at ON pantry_items;
 CREATE TRIGGER update_pantry_items_updated_at
 BEFORE UPDATE ON pantry_items
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_recipes_updated_at ON recipes;
 CREATE TRIGGER update_recipes_updated_at
 BEFORE UPDATE ON recipes
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_meal_plans_updated_at ON meal_plans;
 CREATE TRIGGER update_meal_plans_updated_at
 BEFORE UPDATE ON meal_plans
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_shopping_list_updated_at ON shopping_list;
 CREATE TRIGGER update_shopping_list_updated_at
 BEFORE UPDATE ON shopping_list
 FOR EACH ROW
