@@ -25,6 +25,11 @@ MealZeno is a sophisticated, full-stack web application designed to eliminate ki
 *   **One-Click Generation**: Generate beautifully formatted PDFs of your shopping items in one click.
 *   **Sync Across Devices**: Access your list on your phone while at the grocery store.
 
+### 👤 Smart User Profiles & Preferences
+*   **Personalized Culinary Profile**: Set your dietary preferences (Vegetarian, Vegan, Keto, etc.) and favorite cuisines to influence every AI generation.
+*   **Safety First (Allergy Protection)**: Define your allergies once, and MealZeno will automatically ensure all generated recipes are safe for you and your family.
+*   **Measurement Sync**: Choose between Metric and Imperial units, which are reflected across all recipes and the shopping list.
+
 ---
 
 ## 🛠️ Tech Stack
