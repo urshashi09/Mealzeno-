@@ -12,7 +12,7 @@ import RecipeGenerator from './pages/RecipeGenerator';
 import MyRecipes from './pages/MyRecipes';
 import RecipeDetail from './pages/RecipeDetail';
 import ShoppingList from './pages/ShoppingList';
-import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import MealPlanner from './pages/MealPlanner';
 import Landing from './pages/Landing';
 
@@ -42,7 +42,7 @@ function App() {
           <Route path="/recipes/:id" element={<ProtectedRoute><RecipeDetail /></ProtectedRoute>} />
           <Route path="/meal-plan" element={<ProtectedRoute><MealPlanner /></ProtectedRoute>} />
           <Route path="/shopping-list" element={<ProtectedRoute><ShoppingList /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
           {/* Root route */}
           <Route path="/" element={<Landing />} />

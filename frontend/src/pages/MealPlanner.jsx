@@ -178,8 +178,8 @@ const MealPlanner = () => {
                             <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                                 <div className="min-w-[1000px]">
                                     {/* Days Header */}
-                                    <div className="grid grid-cols-[120px_repeat(7,1fr)] bg-surface-container-low border-b border-surface-container">
-                                        <div className="p-6 border-r border-surface-container bg-surface-container-low flex flex-col items-center justify-center">
+                                    <div className="grid grid-cols-[120px_repeat(7,1fr)] bg-surface-container-low border-b border-zinc-200">
+                                        <div className="p-6 border-r border-zinc-200 bg-surface-container-low flex flex-col items-center justify-center">
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">Meal</span>
                                         </div>
                                         {DAYS_OF_WEEK.map((day, index) => {
@@ -188,7 +188,7 @@ const MealPlanner = () => {
                                             return (
                                                 <div 
                                                     key={day} 
-                                                    className={`p-6 text-center border-r border-surface-container last:border-r-0 transition-colors ${isTodayDate ? 'bg-tertiary/5' : ''}`}
+                                                    className={`p-6 text-center border-r border-zinc-200 last:border-r-0 transition-colors ${isTodayDate ? 'bg-tertiary/5' : ''}`}
                                                 >
                                                     <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isTodayDate ? 'text-tertiary' : 'text-on-surface-variant opacity-40'}`}>
                                                         {day.slice(0, 3)}
@@ -204,8 +204,8 @@ const MealPlanner = () => {
 
                                     {/* Meal Rows */}
                                     {MEAL_TYPES.map(mealType => (
-                                        <div key={mealType} className="grid grid-cols-[120px_repeat(7,1fr)] border-b border-surface-container last:border-b-0">
-                                            <div className="p-6 border-r border-surface-container bg-surface-container-low/50 flex items-center justify-center">
+                                        <div key={mealType} className="grid grid-cols-[120px_repeat(7,1fr)] border-b border-zinc-200 last:border-b-0">
+                                            <div className="p-6 border-r border-zinc-200 bg-surface-container-low/50 flex items-center justify-center">
                                                 <span className="font-label-bold text-xs uppercase tracking-widest text-on-surface-variant opacity-70">
                                                     {mealType}
                                                 </span>
@@ -218,7 +218,7 @@ const MealPlanner = () => {
                                                 return (
                                                     <div
                                                         key={dayIndex}
-                                                        className={`p-4 border-r border-surface-container last:border-r-0 min-h-[160px] relative transition-all group/cell hover:bg-surface-container-low/30`}
+                                                        className={`p-4 border-r border-zinc-200 last:border-r-0 min-h-[160px] relative transition-all group/cell hover:bg-surface-container-low/30`}
                                                     >
                                                         {meal ? (
                                                             <div className="relative h-full group animate-in fade-in duration-300">
@@ -251,7 +251,7 @@ const MealPlanner = () => {
                                                         ) : (
                                                             <button
                                                                 onClick={() => handleAddMeal(date, mealType)}
-                                                                className="w-full h-full flex flex-col items-center justify-center gap-3 text-on-surface-variant opacity-10 hover:opacity-100 hover:text-tertiary hover:bg-tertiary/5 rounded-2xl transition-all border-2 border-dashed border-transparent hover:border-tertiary/20 group"
+                                                                className="w-full h-full flex flex-col items-center justify-center gap-3 text-on-surface-variant opacity-30 hover:opacity-100 hover:text-tertiary hover:bg-tertiary/5 rounded-2xl transition-all border-2 border-dashed border-transparent hover:border-tertiary/20 group"
                                                             >
                                                                 <div className="w-10 h-10 rounded-full border-2 border-current flex items-center justify-center transition-transform group-hover:scale-110">
                                                                     <Plus className="w-6 h-6" />
@@ -268,7 +268,7 @@ const MealPlanner = () => {
                             </div>
 
                             {/* Mobile View (Stacked List) */}
-                            <div className="lg:hidden divide-y divide-surface-container">
+                            <div className="lg:hidden divide-y divide-zinc-200">
                                 {DAYS_OF_WEEK.map((day, dayIndex) => {
                                     const date = addDays(weekStart, dayIndex);
                                     const dateKey = format(date, 'yyyy-MM-dd');
@@ -313,7 +313,7 @@ const MealPlanner = () => {
                                                             ) : (
                                                                 <button
                                                                     onClick={() => handleAddMeal(dateKey, mealType)}
-                                                                    className="flex-1 py-3 px-4 border border-outline-variant rounded-xl text-xs font-label-bold text-on-surface-variant opacity-40 hover:opacity-100 hover:border-tertiary hover:text-tertiary transition-all text-left flex items-center gap-2"
+                                                                    className="flex-1 py-3 px-4 border border-outline-variant rounded-xl text-xs font-label-bold text-on-surface-variant opacity-60 hover:opacity-100 hover:border-tertiary hover:text-tertiary transition-all text-left flex items-center gap-2"
                                                                 >
                                                                     <Plus className="w-4 h-4" />
                                                                     Add meal
@@ -331,7 +331,7 @@ const MealPlanner = () => {
 
                         {/* Quick Stats - Premium Style */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex items-center gap-6 group hover:shadow-lg transition-all">
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-zinc-200 flex items-center gap-6 group hover:shadow-lg transition-all">
                                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                     <ChefHat className="w-8 h-8" />
                                 </div>
@@ -341,7 +341,7 @@ const MealPlanner = () => {
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex items-center gap-6 group hover:shadow-lg transition-all">
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-zinc-200 flex items-center gap-6 group hover:shadow-lg transition-all">
                                 <div className="w-16 h-16 bg-tertiary/10 rounded-2xl flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
                                     <Sparkles className="w-8 h-8" />
                                 </div>
@@ -353,7 +353,7 @@ const MealPlanner = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex flex-col justify-center gap-2 group hover:shadow-lg transition-all relative overflow-hidden">
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-zinc-200 flex flex-col justify-center gap-2 group hover:shadow-lg transition-all relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 mb-1">Current Focus</p>
                                 <p className="text-xl font-bold text-on-surface">Weekly Balance</p>
@@ -458,10 +458,10 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-surface-container animate-in zoom-in-95 duration-300 overflow-hidden relative">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-surface-container animate-in zoom-in-95 duration-300 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-tertiary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                 
-                <div className="flex items-start justify-between mb-8 relative z-10">
+                <div className="flex items-start justify-between mb-6 relative z-10">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <Plus className="w-5 h-5 text-tertiary" />
@@ -477,7 +477,7 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
                 </div>
 
                 {/* Tabs - Premium Pill Style */}
-                <div className="flex bg-surface-container-low p-1 rounded-2xl mb-8 relative z-10">
+                <div className="flex bg-surface-container-low p-1 rounded-2xl mb-6 relative z-10">
                     <button
                         onClick={() => setMode('recipe')}
                         className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
@@ -500,7 +500,7 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                     {mode === 'recipe' ? (
                         <>
                             {/* Search */}
@@ -516,13 +516,13 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
                             </div>
 
                             {/* Recipe List */}
-                            <div className="max-h-[300px] overflow-y-auto space-y-2 custom-scrollbar pr-2">
+                            <div className="max-h-[240px] overflow-y-auto space-y-2 custom-scrollbar pr-2">
                                 {filteredRecipes.length > 0 ? (
                                     filteredRecipes.map(recipe => (
                                         <div
                                             key={recipe.id}
                                             onClick={() => setSelectedRecipe(recipe.id)}
-                                            className={`group p-4 border rounded-2xl cursor-pointer transition-all flex items-center gap-4 ${
+                                            className={`group p-3 border rounded-2xl cursor-pointer transition-all flex items-center gap-4 ${
                                                 selectedRecipe === recipe.id
                                                     ? 'border-tertiary bg-tertiary/5 ring-1 ring-tertiary shadow-sm'
                                                     : 'border-surface-container hover:border-tertiary/30 hover:bg-tertiary/5'
@@ -581,18 +581,18 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
                         </div>
                     )}
 
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex gap-4 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-6 py-4 border border-outline-variant text-on-surface-variant rounded-2xl hover:bg-surface-container font-black text-xs uppercase tracking-widest transition-all"
+                            className="flex-1 px-6 py-3 border border-outline-variant text-on-surface-variant rounded-2xl hover:bg-surface-container font-black text-xs uppercase tracking-widest transition-all"
                         >
                             Back
                         </button>
                         <button
                             type="submit"
                             disabled={loading || (mode === 'recipe' ? !selectedRecipe : !customMealName.trim())}
-                            className="flex-1 px-6 py-4 bg-tertiary hover:bg-tertiary/90 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-tertiary/20 active:scale-95"
+                            className="flex-1 px-6 py-3 bg-tertiary hover:bg-tertiary/90 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-tertiary/20 active:scale-95"
                         >
                             {loading ? 'Securing...' : 'Add to Plan'}
                         </button>

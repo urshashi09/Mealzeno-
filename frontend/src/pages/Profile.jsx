@@ -9,7 +9,7 @@ import api from '../services/api';
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Paleo'];
 const CUISINES = ['Any', 'Italian', 'Mexican', 'Indian', 'Chinese', 'Japanese', 'Thai', 'French', 'Mediterranean', 'American'];
 
-const Settings = () => {
+const Profile = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
@@ -188,8 +188,8 @@ const Settings = () => {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-                    <p className="text-gray-600 mt-1">Manage your account and preferences</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+                    <p className="text-gray-600 mt-1">Manage your personal information and culinary preferences</p>
                 </div>
 
                 <div className="space-y-6">
@@ -438,4 +438,4 @@ const Settings = () => {
     );
 };
 
-export default Settings;
+export default Profile;
