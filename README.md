@@ -60,7 +60,7 @@ MealZeno is a sophisticated, full-stack web application designed to eliminate ki
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/yourusername/mealzeno.git](https://github.com/urshashi09/Mealzeno-.git]
+    git clone (https://github.com/urshashi09/Mealzeno-.git)
     cd mealzeno
     ```
 
