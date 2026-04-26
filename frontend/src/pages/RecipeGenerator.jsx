@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ChefHat, Sparkles, Plus, X, Clock, Users } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
@@ -18,6 +19,9 @@ const RecipeGenerator = () => {
     const [ingredients, setIngredients] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [usePantry, setUsePantry] = useState(false);
+    const [pantryItems, setPantryItems] = useState([]);
+    const [selectedPantryItems, setSelectedPantryItems] = useState([]);
+    const [showPantryPicker, setShowPantryPicker] = useState(false);
     const [cuisineType, setCuisineType] = useState('Any');
     const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
     const [servings, setServings] = useState(4);
@@ -26,12 +30,13 @@ const RecipeGenerator = () => {
     const [generatedRecipe, setGeneratedRecipe] = useState(null);
     const [saving, setSaving] = useState(false);
 
-    // Load user preferences on component mount
+    // Load user preferences and pantry items on component mount
     useEffect(() => {
-        const fetchPreferences = async () => {
+        const fetchData = async () => {
             try {
-                const response = await api.get('/user/profile');
-                const preferences = response.data.preferences || response.data.data?.preferences;
+                // Fetch Profile
+                const profileResponse = await api.get('/user/profile');
+                const preferences = profileResponse.data.preferences || profileResponse.data.data?.preferences;
                 
                 if(preferences){
                     if (Array.isArray(preferences.dietary_restrictions) && preferences.dietary_restrictions.length > 0) {
@@ -46,12 +51,16 @@ const RecipeGenerator = () => {
                         setServings(preferences.default_servings);
                     }
                 }
+
+                // Fetch Pantry
+                const pantryResponse = await api.get('/pantry');
+                setPantryItems(pantryResponse.data.data.items || []);
             } catch (error) {
-                console.error('Error fetching preferences:', error);
+                console.error('Error fetching initial data:', error);
             }
         };
 
-        fetchPreferences();
+        fetchData();
     }, []);
 
     const addIngredient = () => {
@@ -65,6 +74,14 @@ const RecipeGenerator = () => {
         setIngredients(ingredients.filter(i => i !== ingredient));
     };
 
+    const toggleSelectedPantryItem = (itemName) => {
+        if (selectedPantryItems.includes(itemName)) {
+            setSelectedPantryItems(selectedPantryItems.filter(i => i !== itemName));
+        } else {
+            setSelectedPantryItems([...selectedPantryItems, itemName]);
+        }
+    };
+
     const toggleDietary = (option) => {
         if (dietaryRestrictions.includes(option)) {
             setDietaryRestrictions(dietaryRestrictions.filter(d => d !== option));
@@ -74,8 +91,8 @@ const RecipeGenerator = () => {
     };
 
     const handleGenerate =async () => {
-        if (!usePantry && ingredients.length === 0) {
-            toast.error('Please add at least one ingredient or use pantry items');
+        if (!usePantry && ingredients.length === 0 && selectedPantryItems.length === 0) {
+            toast.error('Please add ingredients or select pantry items');
             return;
         }
 
@@ -86,6 +103,7 @@ const RecipeGenerator = () => {
             const response = await api.post('/recipe/generate', 
                 { ingredients,
                     usePantryIngredients: usePantry, 
+                    selectedPantryItems: selectedPantryItems,
                     cuisine_type: cuisineType === 'Any' ? 'any' : cuisineType, 
                     dietary_restrictions: dietaryRestrictions, 
                     servings, 
@@ -126,6 +144,7 @@ const RecipeGenerator = () => {
                     dietary_tags: generatedRecipe.dietaryTags || [],
                     ingredients: generatedRecipe.ingredients, 
                     nutrition: generatedRecipe.nutrition,
+                    cooking_tips: generatedRecipe.cookingTips || [],
                  });
             toast.success('Recipe saved successfully!');
         } catch (error) {
@@ -155,18 +174,73 @@ const RecipeGenerator = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">Ingredients</h2>
 
-                            {/* Use Pantry Toggle */}
-                            <div className="flex items-center gap-3 mb-4 p-3 bg-emerald-50 rounded-lg">
-                                <input
-                                    type="checkbox"
-                                    id="use-pantry"
-                                    checked={usePantry}
-                                    onChange={(e) => setUsePantry(e.target.checked)}
-                                    className="w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
-                                />
-                                <label htmlFor="use-pantry" className="text-sm font-medium text-emerald-900">
-                                    Use ingredients from my pantry
-                                </label>
+                            {/* Use Pantry Toggles */}
+                            <div className="space-y-3 mb-4">
+                                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
+                                    <input
+                                        type="checkbox"
+                                        id="use-pantry"
+                                        checked={usePantry}
+                                        onChange={(e) => {
+                                            setUsePantry(e.target.checked);
+                                            if (e.target.checked) setShowPantryPicker(false);
+                                        }}
+                                        className="w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
+                                    />
+                                    <label htmlFor="use-pantry" className="text-sm font-medium text-emerald-900">
+                                        Use ALL ingredients from my pantry
+                                    </label>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowPantryPicker(!showPantryPicker);
+                                            if (!showPantryPicker) setUsePantry(false);
+                                        }}
+                                        className={`flex items-center justify-between w-full p-3 rounded-lg text-sm font-medium transition-all ${showPantryPicker ? 'bg-emerald-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-500'}`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Plus className={`w-4 h-4 transition-transform ${showPantryPicker ? 'rotate-45' : ''}`} />
+                                            Select specific pantry items
+                                        </div>
+                                        {selectedPantryItems.length > 0 && (
+                                            <span className={`px-2 py-0.5 rounded-full text-xs ${showPantryPicker ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                {selectedPantryItems.length} selected
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {showPantryPicker && (
+                                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">Your Pantry Items</div>
+                                            {pantryItems.length > 0 ? (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-300">
+                                                    {pantryItems.map((item) => {
+                                                        const isSelected = selectedPantryItems.includes(item.name);
+                                                        return (
+                                                            <button
+                                                                key={item.id}
+                                                                type="button"
+                                                                onClick={() => toggleSelectedPantryItem(item.name)}
+                                                                className={`px-3 py-2 rounded-lg text-sm text-left transition-all truncate ${isSelected
+                                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-medium'
+                                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300'
+                                                                    } border`}
+                                                                title={item.name}
+                                                            >
+                                                                {item.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500 text-center py-4">No items in your pantry. <Link to="/pantry" className="text-emerald-600 hover:underline">Add some items!</Link></p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Manual Ingredient Input */}
@@ -176,36 +250,50 @@ const RecipeGenerator = () => {
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && addIngredient()}
-                                    placeholder="Add ingredient (e.g., tomatoes)"
+                                    placeholder="Add other ingredient (e.g., tomatoes)"
                                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                                 />
                                 <button
+                                    type="button"
                                     onClick={addIngredient}
-                                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+                                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors shadow-sm"
                                 >
                                     <Plus className="w-5 h-5" />
                                 </button>
                             </div>
 
-                            {/* Ingredient Tags */}
-                            {ingredients.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {ingredients.map((ingredient, index) => (
-                                        <span
-                                            key={index}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm"
+                            {/* All Ingredient Tags */}
+                            <div className="flex flex-wrap gap-2">
+                                {selectedPantryItems.map((item, index) => (
+                                    <span
+                                        key={`pantry-${index}`}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium border border-emerald-200"
+                                    >
+                                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                        {item}
+                                        <button
+                                            onClick={() => toggleSelectedPantryItem(item)}
+                                            className="hover:text-emerald-900 transition-colors"
                                         >
-                                            {ingredient}
-                                            <button
-                                                onClick={() => removeIngredient(ingredient)}
-                                                className="hover:text-red-600 transition-colors"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </span>
+                                ))}
+                                {ingredients.map((ingredient, index) => (
+                                    <span
+                                        key={`manual-${index}`}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm border border-gray-200"
+                                    >
+                                        {ingredient}
+                                        <button
+                                            onClick={() => removeIngredient(ingredient)}
+                                            className="hover:text-red-600 transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Preferences */}

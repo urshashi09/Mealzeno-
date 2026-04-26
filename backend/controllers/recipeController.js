@@ -10,6 +10,7 @@ export  const generateRecipe= async (req, res,next) => {
         const{
             ingredients,
             usePantryIngredients=false,
+            selectedPantryItems=[],
             dietary_restrictions=[],
             cuisine_type= "any",
             servings= 4,
@@ -22,6 +23,9 @@ export  const generateRecipe= async (req, res,next) => {
             const pantryItems = await pantryItem.findByUserId(userId);
             const pantryIngredientNames = pantryItems.map(item => item.name.toLowerCase());
             finalIngredients = [...new Set([...finalIngredients, ...pantryIngredientNames])];
+        } else if (Array.isArray(selectedPantryItems) && selectedPantryItems.length > 0) {
+            const normalizedSelected = selectedPantryItems.map(name => name.toLowerCase());
+            finalIngredients = [...new Set([...finalIngredients, ...normalizedSelected])];
         }
 
         if(finalIngredients.length === 0){
@@ -49,8 +53,6 @@ export  const generateRecipe= async (req, res,next) => {
         next(error);
     }   
 }
-
-
 
 
 export const getPantrySuggestions= async (req, res, next) => {

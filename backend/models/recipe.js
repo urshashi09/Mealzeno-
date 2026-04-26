@@ -19,14 +19,15 @@ class Recipe {
                 instructions,
                 dietary_tags = [],
                 user_notes,
+                cooking_tips = [],
                 image_url,
                 ingredients = [],
                 nutrition = {}
             } = recipeData
 
             const recipeResult = await client.query(
-                `INSERT INTO recipes (user_id, name, description, cuisine_type, difficulty, prep_time, cook_time, servings, instructions, dietary_tags, user_notes, image_url)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                `INSERT INTO recipes (user_id, name, description, cuisine_type, difficulty, prep_time, cook_time, servings, instructions, dietary_tags, user_notes, cooking_tips, image_url)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                  RETURNING *`,
                 [
                     userId,
@@ -40,6 +41,7 @@ class Recipe {
                     JSON.stringify(instructions),
                     dietary_tags,
                     user_notes,
+                    JSON.stringify(cooking_tips),
                     image_url
                 ]
             );
@@ -190,6 +192,7 @@ class Recipe {
             instructions,
             dietary_tags,
             user_notes,
+            cooking_tips,
             image_url } = updates
 
         const result = await db.query(
@@ -204,8 +207,9 @@ class Recipe {
                     instructions = COALESCE($8, instructions),
                     dietary_tags = COALESCE($9, dietary_tags),
                     user_notes = COALESCE($10, user_notes),
-                    image_url = COALESCE($11, image_url)
-                WHERE id = $12 AND user_id = $13
+                    cooking_tips = COALESCE($11, cooking_tips),
+                    image_url = COALESCE($12, image_url)
+                WHERE id = $13 AND user_id = $14
                 RETURNING *`,
             [
                 name,
@@ -218,6 +222,7 @@ class Recipe {
                 instructions ? JSON.stringify(instructions) : null,
                 dietary_tags,
                 user_notes,
+                cooking_tips ? JSON.stringify(cooking_tips) : null,
                 image_url,
                 id,
                 userId

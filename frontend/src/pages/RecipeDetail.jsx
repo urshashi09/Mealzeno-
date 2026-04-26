@@ -246,6 +246,24 @@ const RecipeDetail = () => {
                             </div>
                         )}
 
+                        {/* Cooking Tips */}
+                        {recipe.cooking_tips && recipe.cooking_tips.length > 0 && (
+                            <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
+                                <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                                    <ChefHat className="w-5 h-5" />
+                                    Cooking Tips
+                                </h3>
+                                <ul className="space-y-2">
+                                    {recipe.cooking_tips.map((tip, index) => (
+                                        <li key={index} className="text-amber-800 text-sm flex gap-2">
+                                            <span className="shrink-0">•</span>
+                                            <span>{tip}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* User Notes */}
                         {recipe.user_notes && (
                             <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-6">
