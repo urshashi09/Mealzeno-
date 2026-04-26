@@ -93,7 +93,11 @@ const RecipeGenerator = () => {
 
             setGeneratedRecipe(response.data.data.recipe);
             if (response.data.data.recipe?._isFallback) {
-                toast('AI quota reached — showing a simplified fallback recipe. Try again later!', { icon: '⚠️' });
+                const reason = response.data.data.recipe._fallbackReason;
+                const message = reason === 'all_apis_failed' 
+                    ? 'Both Gemini and Groq quotas reached. Showing simplified recipe.' 
+                    : 'Gemini quota reached — showing simplified recipe.';
+                toast(message, { icon: '⚠️' });
             } else {
                 toast.success('Recipe generated successfully!');
             }
@@ -313,7 +317,13 @@ const RecipeGenerator = () => {
                                     {generatedRecipe._isFallback && (
                                         <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
                                             <span className="text-lg leading-none">⚠️</span>
-                                            <span><strong>AI temporarily unavailable</strong> — this is a simplified recipe. Your Gemini API quota is exhausted. Try again tomorrow or upgrade your plan at <a href="https://ai.dev/rate-limit" className="underline" target="_blank" rel="noreferrer">ai.dev/rate-limit</a>.</span>
+                                            <span>
+                                                <strong>AI temporarily unavailable</strong> — this is a simplified recipe. 
+                                                {generatedRecipe._fallbackReason === 'all_apis_failed' 
+                                                    ? " Both Gemini and Groq API quotas are exhausted." 
+                                                    : " Your Gemini API quota is exhausted."} 
+                                                Try again tomorrow or check your plan at <a href="https://console.groq.com/keys" className="underline" target="_blank" rel="noreferrer">Groq Console</a>.
+                                            </span>
                                         </div>
                                     )}
 

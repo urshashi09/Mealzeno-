@@ -3,16 +3,16 @@ import db from "../config/db.js";
 class MealPlan {
 
     static async create(userId, mealData) {
-        const { recipe_id, planned_date, meal_date, meal_type } = mealData;
+        const { recipe_id, custom_meal_name, planned_date, meal_date, meal_type } = mealData;
         const date = planned_date || meal_date
 
         const result = await db.query(
-            `INSERT INTO meal_plans (user_id, recipe_id, meal_date, meal_type)
-             VALUES ($1, $2, $3::date, $4)
+            `INSERT INTO meal_plans (user_id, recipe_id, custom_meal_name, meal_date, meal_type)
+             VALUES ($1, $2, $3, $4::date, $5)
              ON CONFLICT (user_id, meal_date, meal_type) 
-             DO UPDATE SET recipe_id = $2
+             DO UPDATE SET recipe_id = $2, custom_meal_name = $3
              RETURNING *`,
-            [userId, recipe_id, date, meal_type]
+            [userId, recipe_id || null, custom_meal_name || null, date, meal_type]
         );
         return result.rows[0];
     }
@@ -20,10 +20,12 @@ class MealPlan {
 
     static async findByDateRange(userId, startDate, endDate) {
         const result = await db.query(
-            `SELECT mp.id, mp.user_id, mp.recipe_id, mp.meal_date::date as meal_date,
-             mp.meal_type, mp.created_at, mp.updated_at, r.name as recipe_name, r.image_url, r.prep_time, r.cook_time
+            `SELECT mp.id, mp.user_id, mp.recipe_id, mp.custom_meal_name, mp.meal_date::date as meal_date,
+             mp.meal_type, mp.created_at, mp.updated_at, 
+             COALESCE(r.name, mp.custom_meal_name) as recipe_name, 
+             r.image_url, r.prep_time, r.cook_time
              FROM meal_plans mp
-             JOIN recipes r ON mp.recipe_id = r.id
+             LEFT JOIN recipes r ON mp.recipe_id = r.id
              WHERE mp.user_id = $1 
              AND mp.meal_date>= $2
              AND mp.meal_date <= $3
@@ -49,9 +51,9 @@ class MealPlan {
     //get upcoming meals for next 7 days
     static async getUpcoming(userId, limit = 5) {
             const result = await db.query(
-                `SELECT mp.*, r.name as recipe_name, r.image_url 
+                `SELECT mp.*, COALESCE(r.name, mp.custom_meal_name) as recipe_name, r.image_url 
                 FROM meal_plans mp
-                JOIN recipes r ON mp.recipe_id = r.id
+                LEFT JOIN recipes r ON mp.recipe_id = r.id
                 WHERE mp.user_id = $1 
                 AND mp.meal_date >= CURRENT_DATE
                 ORDER BY mp.meal_date ASC,

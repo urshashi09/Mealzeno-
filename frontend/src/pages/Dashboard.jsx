@@ -39,7 +39,7 @@ const Dashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background flex flex-col">
+            <div className="min-h-screen bg-[#fafafb] flex flex-col">
                 <Navbar />
                 <div className="flex flex-1 items-center justify-center">
                     <div className="w-8 h-8 border-4 border-[#F45B00] border-t-transparent rounded-full animate-spin" />
@@ -49,13 +49,14 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#fafafb]">
             <Navbar />
 
             <main className="max-w-[1280px] mx-auto px-4 md:px-10 py-10 pb-24 md:pb-10">
                 {/* Welcome Message */}
                 <header className="mb-10">
-                    <h1 className="font-headline-lg text-headline-lg text-on-surface mb-2">Dashboard: Welcome back!</h1>
+                    <h1 className="font-headline-sm text-4xl text-on-surface font-black tracking-tight">Dashboard</h1><br />
+                    <h1 className="font-headline-lg text-headline-lg text-on-surface mb-2">Welcome back!</h1>
                     <p className="text-body-lg text-on-surface-variant opacity-80">Here's your cooking overview for today.</p>
                 </header>
 
@@ -152,7 +153,7 @@ const Dashboard = () => {
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-on-surface truncate">{recipe.name}</p>
+                                            <p className="font-label-md text-on-surface truncate">{recipe.name}</p>
                                             <p className="text-label-sm text-on-surface-variant">
                                                 {recipe.cook_time} mins • {recipe.cuisine_type || 'Custom'}
                                             </p>
@@ -187,7 +188,7 @@ const Dashboard = () => {
                                             <span className="material-symbols-outlined">event</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-on-surface truncate">{meal.recipe_name}</p>
+                                            <p className="font-label-md text-on-surface truncate">{meal.recipe_name}</p>
                                             <p className="text-label-sm text-on-surface-variant capitalize">
                                                 {new Date(meal.meal_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} • {meal.meal_type}
                                             </p>

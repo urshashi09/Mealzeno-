@@ -306,6 +306,8 @@ const MealPlanner = () => {
 
 const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
     const [selectedRecipe, setSelectedRecipe] = useState('');
+    const [customMealName, setCustomMealName] = useState('');
+    const [mode, setMode] = useState('recipe'); // 'recipe' or 'custom'
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -315,22 +317,45 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedRecipe) {
+        
+        if (mode === 'recipe' && !selectedRecipe) {
             toast.error('Please select a recipe');
+            return;
+        }
+        
+        if (mode === 'custom' && !customMealName.trim()) {
+            toast.error('Please enter a meal name');
             return;
         }
 
         setLoading(true);
         try{
-            const response = await api.post('/mealplan', { 
+            const payload = { 
                 planned_date: date, 
-                meal_type: mealType, 
-                recipe_id: selectedRecipe });
-            const selectedRecipeData = recipes.find(recipe => String(recipe.id) === String(selectedRecipe));
+                meal_type: mealType 
+            };
+            
+            if (mode === 'recipe') {
+                payload.recipe_id = selectedRecipe;
+            } else {
+                payload.custom_meal_name = customMealName.trim();
+            }
+
+            const response = await api.post('/mealplan', payload);
+            
+            let recipeName = '';
+            if (mode === 'recipe') {
+                const selectedRecipeData = recipes.find(recipe => String(recipe.id) === String(selectedRecipe));
+                recipeName = selectedRecipeData?.name || 'Untitled Recipe';
+            } else {
+                recipeName = customMealName.trim();
+            }
+
             const mealPlanEntry = {
                 ...response.data.data.mealPlan,
-                recipe_name: selectedRecipeData?.name || response.data.data.mealPlan?.recipe_name || 'Untitled Recipe'
+                recipe_name: recipeName
             };
+            
             toast.success('Meal added successfully');
             onSuccess(mealPlanEntry);
             
@@ -344,65 +369,111 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6">
-                <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Add Meal</h2>
                         <p className="text-sm text-gray-600 capitalize">
                             {format(new Date(date), 'EEEE, MMM d')} - {mealType}
                         </p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Search */}
-                    <div>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search recipes..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                        />
-                    </div>
+                {/* Tabs */}
+                <div className="flex border-b border-gray-100 mb-4">
+                    <button
+                        onClick={() => setMode('recipe')}
+                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                            mode === 'recipe' 
+                                ? 'border-emerald-500 text-emerald-600' 
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        Search Recipes
+                    </button>
+                    <button
+                        onClick={() => setMode('custom')}
+                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                            mode === 'custom' 
+                                ? 'border-emerald-500 text-emerald-600' 
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        Custom Meal
+                    </button>
+                </div>
 
-                    {/* Recipe List */}
-                    <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar">
-                        {filteredRecipes.length > 0 ? (
-                            filteredRecipes.map(recipe => (
-                                <label
-                                    key={recipe.id}
-                                    className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedRecipe === recipe.id
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-gray-200 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="recipe"
-                                        value={recipe.id}
-                                        checked={selectedRecipe === recipe.id}
-                                        onChange={(e) => setSelectedRecipe(e.target.value)}
-                                        className="w-4 h-4 text-emerald-500 border-gray-300 focus:ring-emerald-500"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-900">{recipe.name}</p>
-                                        {recipe.cuisine_type && (
-                                            <p className="text-xs text-gray-500">{recipe.cuisine_type}</p>
-                                        )}
-                                    </div>
-                                </label>
-                            ))
-                        ) : (
-                            <div className="text-center py-8">
-                                <ChefHat className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                <p className="text-gray-500">No recipes found</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {mode === 'recipe' ? (
+                        <>
+                            {/* Search */}
+                            <div>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search recipes..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                />
                             </div>
-                        )}
-                    </div>
+
+                            {/* Recipe List */}
+                            <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+                                {filteredRecipes.length > 0 ? (
+                                    filteredRecipes.map(recipe => (
+                                        <label
+                                            key={recipe.id}
+                                            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                                                selectedRecipe === recipe.id
+                                                    ? 'border-emerald-500 bg-emerald-50'
+                                                    : 'border-gray-200 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="recipe"
+                                                value={recipe.id}
+                                                checked={selectedRecipe === recipe.id}
+                                                onChange={(e) => setSelectedRecipe(e.target.value)}
+                                                className="w-4 h-4 text-emerald-500 border-gray-300 focus:ring-emerald-500"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="font-medium text-gray-900">{recipe.name}</p>
+                                                {recipe.cuisine_type && (
+                                                    <p className="text-xs text-gray-500">{recipe.cuisine_type}</p>
+                                                )}
+                                            </div>
+                                        </label>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <ChefHat className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                                        <p className="text-gray-500">No recipes found</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="py-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Meal Name
+                            </label>
+                            <input
+                                type="text"
+                                value={customMealName}
+                                onChange={(e) => setCustomMealName(e.target.value)}
+                                placeholder="e.g. Avocado Toast, Pizza Night..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                autoFocus
+                            />
+                            <p className="mt-2 text-xs text-gray-500">
+                                Enter a simple name for your meal. This won't be linked to a specific recipe.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <button
@@ -414,8 +485,8 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
                         </button>
                         <button
                             type="submit"
-                            disabled={loading || !selectedRecipe}
-                            className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                            disabled={loading || (mode === 'recipe' ? !selectedRecipe : !customMealName.trim())}
+                            className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shadow-sm"
                         >
                             {loading ? 'Adding...' : 'Add Meal'}
                         </button>
