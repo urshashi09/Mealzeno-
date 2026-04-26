@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, X, ChefHat } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Plus, X, ChefHat, Calendar, ChevronLeft, ChevronRight, Sparkles, Trash2, Search } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
 import api from '../services/api';
 
 
@@ -28,7 +28,6 @@ const MealPlanner = () => {
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [loading, setLoading] = useState(true);
     const [removingMealId, setRemovingMealId] = useState(null);
-    const [activeWeekButton, setActiveWeekButton] = useState('this');
 
     const fetchMealPlan = useCallback(async () => {
         try {
@@ -40,8 +39,6 @@ const MealPlanner = () => {
 
             const organized = {};
             meals.forEach(meal => {
-                // Normalize meal_date to 'yyyy-MM-dd' string regardless of what
-                // PostgreSQL returns (Date object or ISO timestamp string)
                 const dateKey = format(new Date(meal.meal_date), 'yyyy-MM-dd');
                 if (!organized[dateKey]) organized[dateKey] = {};
                 organized[dateKey][meal.meal_type] = meal;
@@ -62,7 +59,6 @@ const MealPlanner = () => {
             setRecipes(response.data.data.recipes || []);
         } catch (error) {
             console.error('Error fetching recipes:', error);
-            toast.error('Error fetching recipes');
         } 
     }, []);
 
@@ -79,7 +75,6 @@ const MealPlanner = () => {
         const parsedDate = new Date(weekStartParam);
         if (!Number.isNaN(parsedDate.getTime())) {
             setWeekStart(startOfWeek(parsedDate));
-            setActiveWeekButton('this');
         }
     }, [searchParams]);
 
@@ -110,174 +105,268 @@ const MealPlanner = () => {
         return mealPlan[date] || {};
     };
 
+    const navigateWeek = (days) => {
+        setWeekStart(addDays(weekStart, days));
+    };
+
+    const resetToToday = () => {
+        setWeekStart(startOfWeek(new Date()));
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background font-body-md text-on-background">
             <Navbar />
 
-            {loading ? (
-                <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-            ) : (
-                <>
-
-                <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Meal Planner</h1>
-                            <p className="text-gray-600 mt-1">Plan your weekly meals</p>
-                        </div>
-
-                        {/* Week Navigation */}
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => {
-                                    setActiveWeekButton('previous');
-                                    setWeekStart(addDays(weekStart, -7));
-                                }}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    activeWeekButton === 'previous'
-                                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                                Previous Week
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveWeekButton('this');
-                                    setWeekStart(startOfWeek(new Date()));
-                                }}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    activeWeekButton === 'this'
-                                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                                This Week
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveWeekButton('next');
-                                    setWeekStart(addDays(weekStart, 7));
-                                }}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    activeWeekButton === 'next'
-                                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                                Next Week
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Week Display */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                        <div className="text-center">
-                            <p className="text-sm text-gray-600">Week of</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                                {format(weekStart, 'MMMM d')} - {format(addDays(weekStart, 6), 'MMMM d, yyyy')}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Calendar Grid */}
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                        {/* Header Row */}
-                        <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50">
-                            <div className="p-4 font-semibold text-gray-700 border-r border-gray-200">
-                                Meal
+            <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-10 pb-24 md:pb-10">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-tertiary/10 rounded-xl flex items-center justify-center text-tertiary">
+                                <Calendar className="w-6 h-6" />
                             </div>
-                            {DAYS_OF_WEEK.map((day, index) => (
-                                <div key={day} className="p-4 text-center border-r border-gray-200 last:border-r-0">
-                                    <div className="font-semibold text-gray-900">{day}</div>
-                                    <div className="text-sm text-gray-500">
-                                        {format(addDays(weekStart, index), 'MMM d')}
-                                    </div>
-                                </div>
-                            ))}
+                            <h1 className="font-headline-xl text-headline-xl font-black tracking-tight leading-none">Meal Planner</h1>
+                        </div>
+                        <p className="text-body-lg text-on-surface-variant opacity-80">Organize your weekly culinary journey and stay on track.</p>
+                    </div>
+
+                    {/* Week Navigation - Stitch UI Style */}
+                    <div className="flex items-center bg-white p-1.5 rounded-2xl shadow-sm border border-surface-container">
+                        <button
+                            onClick={() => navigateWeek(-7)}
+                            className="p-3 text-on-surface-variant hover:text-tertiary hover:bg-tertiary/10 rounded-xl transition-all"
+                            title="Previous Week"
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        
+                        <div className="px-6 py-2 flex flex-col items-center min-w-[240px]">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 mb-1">
+                                {format(weekStart, 'MMM d')} — {format(addDays(weekStart, 6), 'MMM d')}
+                            </span>
+                            <span className="font-headline-md text-sm font-bold text-on-surface">
+                                {format(weekStart, 'MMMM yyyy')}
+                            </span>
                         </div>
 
-                        {/* Meal Rows */}
-                        {MEAL_TYPES.map(mealType => (
-                            <div key={mealType} className="grid grid-cols-8 border-b border-gray-200 last:border-b-0">
-                                <div className="p-4 font-medium text-gray-700 capitalize border-r border-gray-200 bg-gray-50">
-                                    {mealType}
+                        <button
+                            onClick={() => navigateWeek(7)}
+                            className="p-3 text-on-surface-variant hover:text-tertiary hover:bg-tertiary/10 rounded-xl transition-all"
+                            title="Next Week"
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={resetToToday}
+                        className="px-6 py-3 bg-tertiary/10 text-tertiary border border-tertiary/20 rounded-full font-label-bold hover:bg-tertiary/20 transition-all active:scale-95"
+                    >
+                        Current Week
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="flex min-h-[400px] items-center justify-center bg-white rounded-3xl border border-surface-container shadow-sm">
+                        <div className="w-10 h-10 border-4 border-tertiary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : (
+                    <div className="space-y-10">
+                        {/* Calendar Grid */}
+                        <div className="bg-white rounded-3xl shadow-[0_4px_30px_rgba(26,26,30,0.06)] border border-surface-container overflow-hidden">
+                            {/* Desktop Grid Layout */}
+                            <div className="hidden lg:block overflow-x-auto custom-scrollbar">
+                                <div className="min-w-[1000px]">
+                                    {/* Days Header */}
+                                    <div className="grid grid-cols-[120px_repeat(7,1fr)] bg-surface-container-low border-b border-surface-container">
+                                        <div className="p-6 border-r border-surface-container bg-surface-container-low flex flex-col items-center justify-center">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">Meal</span>
+                                        </div>
+                                        {DAYS_OF_WEEK.map((day, index) => {
+                                            const date = addDays(weekStart, index);
+                                            const isTodayDate = isToday(date);
+                                            return (
+                                                <div 
+                                                    key={day} 
+                                                    className={`p-6 text-center border-r border-surface-container last:border-r-0 transition-colors ${isTodayDate ? 'bg-tertiary/5' : ''}`}
+                                                >
+                                                    <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isTodayDate ? 'text-tertiary' : 'text-on-surface-variant opacity-40'}`}>
+                                                        {day.slice(0, 3)}
+                                                    </div>
+                                                    <div className={`text-xl font-black ${isTodayDate ? 'text-tertiary scale-110' : 'text-on-surface'}`}>
+                                                        {format(date, 'd')}
+                                                    </div>
+                                                    {isTodayDate && <div className="w-1.5 h-1.5 bg-tertiary rounded-full mx-auto mt-2 shadow-[0_0_8px_rgba(0,105,71,0.5)]"></div>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Meal Rows */}
+                                    {MEAL_TYPES.map(mealType => (
+                                        <div key={mealType} className="grid grid-cols-[120px_repeat(7,1fr)] border-b border-surface-container last:border-b-0">
+                                            <div className="p-6 border-r border-surface-container bg-surface-container-low/50 flex items-center justify-center">
+                                                <span className="font-label-bold text-xs uppercase tracking-widest text-on-surface-variant opacity-70">
+                                                    {mealType}
+                                                </span>
+                                            </div>
+                                            {DAYS_OF_WEEK.map((_, dayIndex) => {
+                                                const date = format(addDays(weekStart, dayIndex), 'yyyy-MM-dd');
+                                                const dayMeals = getDayMeals(dayIndex);
+                                                const meal = dayMeals[mealType];
+
+                                                return (
+                                                    <div
+                                                        key={dayIndex}
+                                                        className={`p-4 border-r border-surface-container last:border-r-0 min-h-[160px] relative transition-all group/cell hover:bg-surface-container-low/30`}
+                                                    >
+                                                        {meal ? (
+                                                            <div className="relative h-full group animate-in fade-in duration-300">
+                                                                <div className="bg-tertiary-fixed text-on-tertiary-fixed rounded-2xl p-4 h-full shadow-sm border border-tertiary/10 group-hover:shadow-md transition-all flex flex-col justify-between">
+                                                                    <div className="mb-2">
+                                                                        <p
+                                                                            className="text-xs font-black leading-tight break-words line-clamp-3 mb-1"
+                                                                            title={meal.recipe_name}
+                                                                        >
+                                                                            {meal.recipe_name}
+                                                                        </p>
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex items-center justify-between mt-auto">
+                                                                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                                                                            <ChefHat className="w-3 h-3" />
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleRemoveMeal(meal.id)}
+                                                                            disabled={removingMealId === meal.id}
+                                                                            className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg transition-all text-on-tertiary-fixed opacity-0 group-hover:opacity-100 disabled:opacity-100"
+                                                                        >
+                                                                            {removingMealId === meal.id
+                                                                                ? <div className="w-3 h-3 border-2 border-on-tertiary-fixed border-t-transparent rounded-full animate-spin" />
+                                                                                : <Trash2 className="w-3.5 h-3.5" />}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleAddMeal(date, mealType)}
+                                                                className="w-full h-full flex flex-col items-center justify-center gap-3 text-on-surface-variant opacity-10 hover:opacity-100 hover:text-tertiary hover:bg-tertiary/5 rounded-2xl transition-all border-2 border-dashed border-transparent hover:border-tertiary/20 group"
+                                                            >
+                                                                <div className="w-10 h-10 rounded-full border-2 border-current flex items-center justify-center transition-transform group-hover:scale-110">
+                                                                    <Plus className="w-6 h-6" />
+                                                                </div>
+                                                                <span className="text-[10px] font-black uppercase tracking-widest">Plan Meal</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
                                 </div>
-                                {DAYS_OF_WEEK.map((_, dayIndex) => {
-                                    const date = format(addDays(weekStart, dayIndex), 'yyyy-MM-dd');
+                            </div>
+
+                            {/* Mobile View (Stacked List) */}
+                            <div className="lg:hidden divide-y divide-surface-container">
+                                {DAYS_OF_WEEK.map((day, dayIndex) => {
+                                    const date = addDays(weekStart, dayIndex);
+                                    const dateKey = format(date, 'yyyy-MM-dd');
                                     const dayMeals = getDayMeals(dayIndex);
-                                    const meal = dayMeals[mealType];
+                                    const isTodayDate = isToday(date);
 
                                     return (
-                                        <div
-                                            key={dayIndex}
-                                            className="p-3 border-r border-gray-200 last:border-r-0 min-h-[100px] hover:bg-gray-50 transition-colors"
-                                        >
-                                            {meal ? (
-                                                <div className="relative group">
-                                                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 min-h-[84px]">
-                                                        <p
-                                                            className="text-sm font-semibold text-emerald-950 leading-snug break-words"
-                                                            title={meal.recipe_name}
-                                                        >
-                                                            {meal.recipe_name}
+                                        <div key={day} className={`p-6 ${isTodayDate ? 'bg-tertiary/5' : ''}`}>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center border ${isTodayDate ? 'bg-tertiary text-white border-tertiary' : 'bg-surface-container-low border-surface-container'}`}>
+                                                        <span className="text-[10px] font-black uppercase">{day.slice(0, 3)}</span>
+                                                        <span className="text-xl font-black leading-none">{format(date, 'd')}</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className={`font-headline-md text-sm font-bold ${isTodayDate ? 'text-tertiary' : 'text-on-surface'}`}>
+                                                            {isTodayDate ? 'Today' : day}
                                                         </p>
-                                                        <p className="mt-1 text-[10px] uppercase tracking-wide text-emerald-700">
-                                                            {meal.meal_type}
-                                                        </p>
-                                                        <button
-                                                            onClick={() => handleRemoveMeal(meal.id)}
-                                                            disabled={removingMealId === meal.id}
-                                                            className="absolute top-1 right-1 p-1 bg-white rounded hover:bg-red-50 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 disabled:cursor-not-allowed"
-                                                        >
-                                                            {removingMealId === meal.id
-                                                                ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                                                                : <X className="w-4 h-4" />}
-                                                        </button>
+                                                        <p className="text-xs text-on-surface-variant opacity-60">{format(date, 'MMMM yyyy')}</p>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleAddMeal(date, mealType)}
-                                                    className="w-full h-full flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors group"
-                                                >
-                                                    <Plus className="w-6 h-6" />
-                                                </button>
-                                            )}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {MEAL_TYPES.map(mealType => {
+                                                    const meal = dayMeals[mealType];
+                                                    return (
+                                                        <div key={mealType} className="flex items-center gap-4">
+                                                            <div className="w-20 text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">
+                                                                {mealType}
+                                                            </div>
+                                                            {meal ? (
+                                                                <div className="flex-1 bg-tertiary-fixed text-on-tertiary-fixed p-3 rounded-xl flex items-center justify-between shadow-sm border border-tertiary/10">
+                                                                    <span className="text-xs font-bold line-clamp-1">{meal.recipe_name}</span>
+                                                                    <button
+                                                                        onClick={() => handleRemoveMeal(meal.id)}
+                                                                        className="p-1.5 bg-white/20 rounded-lg"
+                                                                    >
+                                                                        <X className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleAddMeal(dateKey, mealType)}
+                                                                    className="flex-1 py-3 px-4 border border-outline-variant rounded-xl text-xs font-label-bold text-on-surface-variant opacity-40 hover:opacity-100 hover:border-tertiary hover:text-tertiary transition-all text-left flex items-center gap-2"
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                    Add meal
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                        ))}
-                    </div>
+                        </div>
 
-                    {/* Stats */}
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <p className="text-sm text-gray-600">Meals Planned</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {Object.values(mealPlan).reduce((acc, day) => acc + Object.keys(day).length, 0)}
-                            </p>
-                        </div>
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <p className="text-sm text-gray-600">Total Recipes</p>
-                            <p className="text-2xl font-bold text-gray-900">{recipes.length}</p>
-                        </div>
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <p className="text-sm text-gray-600">This Week</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d')}
-                            </p>
+                        {/* Quick Stats - Premium Style */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex items-center gap-6 group hover:shadow-lg transition-all">
+                                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <ChefHat className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 mb-1">Recipes Available</p>
+                                    <p className="text-3xl font-black text-on-surface">{recipes.length}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex items-center gap-6 group hover:shadow-lg transition-all">
+                                <div className="w-16 h-16 bg-tertiary/10 rounded-2xl flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
+                                    <Sparkles className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 mb-1">Meals Planned</p>
+                                    <p className="text-3xl font-black text-on-surface">
+                                        {Object.values(mealPlan).reduce((acc, day) => acc + Object.keys(day).length, 0)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container flex flex-col justify-center gap-2 group hover:shadow-lg transition-all relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 mb-1">Current Focus</p>
+                                <p className="text-xl font-bold text-on-surface">Weekly Balance</p>
+                                <Link to="/pantry" className="text-xs font-black text-secondary hover:underline flex items-center gap-1 mt-1">
+                                    Check Ingredients <ChevronRight className="w-3 h-3" />
+                                </Link>
+                            </div>
                         </div>
                     </div>
-                </div>
-                </>
-            )}
+                )}
+            </div>
 
-            {/* Add Meal Modal */}
+            {/* Add Meal Modal - Updated Design */}
             {showAddModal && selectedSlot && (
                 <AddMealModal
                     date={selectedSlot.date}
@@ -368,127 +457,144 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-                <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-surface-container animate-in zoom-in-95 duration-300 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-tertiary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                
+                <div className="flex items-start justify-between mb-8 relative z-10">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Add Meal</h2>
-                        <p className="text-sm text-gray-600 capitalize">
-                            {format(new Date(date), 'EEEE, MMM d')} - {mealType}
+                        <div className="flex items-center gap-2 mb-1">
+                            <Plus className="w-5 h-5 text-tertiary" />
+                            <h2 className="font-headline-md text-headline-md text-on-surface">Add to Schedule</h2>
+                        </div>
+                        <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant opacity-60">
+                            {format(new Date(date), 'EEEE, MMM d')} • <span className="text-tertiary">{mealType}</span>
                         </p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button onClick={onClose} className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-100 mb-4">
+                {/* Tabs - Premium Pill Style */}
+                <div className="flex bg-surface-container-low p-1 rounded-2xl mb-8 relative z-10">
                     <button
                         onClick={() => setMode('recipe')}
-                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
                             mode === 'recipe' 
-                                ? 'border-emerald-500 text-emerald-600' 
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                ? 'bg-white text-tertiary shadow-sm' 
+                                : 'text-on-surface-variant opacity-60 hover:opacity-100'
                         }`}
                     >
-                        Search Recipes
+                        Pick Recipe
                     </button>
                     <button
                         onClick={() => setMode('custom')}
-                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
                             mode === 'custom' 
-                                ? 'border-emerald-500 text-emerald-600' 
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                ? 'bg-white text-tertiary shadow-sm' 
+                                : 'text-on-surface-variant opacity-60 hover:opacity-100'
                         }`}
                     >
-                        Custom Meal
+                        Custom Note
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     {mode === 'recipe' ? (
                         <>
                             {/* Search */}
-                            <div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant opacity-40" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search recipes..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                    placeholder="Find in your collection..."
+                                    className="w-full pl-11 pr-4 py-3.5 bg-surface-container-lowest border border-outline-variant rounded-2xl focus:ring-2 focus:ring-tertiary/20 focus:border-tertiary outline-none transition-all font-body-md text-sm"
                                 />
                             </div>
 
                             {/* Recipe List */}
-                            <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+                            <div className="max-h-[300px] overflow-y-auto space-y-2 custom-scrollbar pr-2">
                                 {filteredRecipes.length > 0 ? (
                                     filteredRecipes.map(recipe => (
-                                        <label
+                                        <div
                                             key={recipe.id}
-                                            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                                            onClick={() => setSelectedRecipe(recipe.id)}
+                                            className={`group p-4 border rounded-2xl cursor-pointer transition-all flex items-center gap-4 ${
                                                 selectedRecipe === recipe.id
-                                                    ? 'border-emerald-500 bg-emerald-50'
-                                                    : 'border-gray-200 hover:bg-gray-50'
+                                                    ? 'border-tertiary bg-tertiary/5 ring-1 ring-tertiary shadow-sm'
+                                                    : 'border-surface-container hover:border-tertiary/30 hover:bg-tertiary/5'
                                                 }`}
                                         >
-                                            <input
-                                                type="radio"
-                                                name="recipe"
-                                                value={recipe.id}
-                                                checked={selectedRecipe === recipe.id}
-                                                onChange={(e) => setSelectedRecipe(e.target.value)}
-                                                className="w-4 h-4 text-emerald-500 border-gray-300 focus:ring-emerald-500"
-                                            />
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-900">{recipe.name}</p>
-                                                {recipe.cuisine_type && (
-                                                    <p className="text-xs text-gray-500">{recipe.cuisine_type}</p>
-                                                )}
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                selectedRecipe === recipe.id ? 'border-tertiary bg-tertiary' : 'border-outline-variant'
+                                            }`}>
+                                                {selectedRecipe === recipe.id && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                                             </div>
-                                        </label>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`font-bold truncate text-sm transition-colors ${selectedRecipe === recipe.id ? 'text-tertiary' : 'text-on-surface'}`}>
+                                                    {recipe.name}
+                                                </p>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">
+                                                        {recipe.cuisine_type || 'Custom'}
+                                                    </span>
+                                                    <div className="w-1 h-1 bg-on-surface-variant opacity-20 rounded-full"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">
+                                                        {recipe.cook_time} min
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-8">
-                                        <ChefHat className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                        <p className="text-gray-500">No recipes found</p>
+                                    <div className="text-center py-10 opacity-30">
+                                        <ChefHat className="w-12 h-12 mx-auto mb-3" />
+                                        <p className="font-bold text-sm">No recipes found</p>
                                     </div>
                                 )}
                             </div>
                         </>
                     ) : (
-                        <div className="py-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Meal Name
-                            </label>
-                            <input
-                                type="text"
-                                value={customMealName}
-                                onChange={(e) => setCustomMealName(e.target.value)}
-                                placeholder="e.g. Avocado Toast, Pizza Night..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                                autoFocus
-                            />
-                            <p className="mt-2 text-xs text-gray-500">
-                                Enter a simple name for your meal. This won't be linked to a specific recipe.
-                            </p>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 mb-3 px-1">
+                                    Meal Descriptor
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customMealName}
+                                    onChange={(e) => setCustomMealName(e.target.value)}
+                                    placeholder="e.g. Grandma's Sunday Roast"
+                                    className="w-full px-5 py-4 bg-surface-container-lowest border border-outline-variant rounded-2xl focus:ring-2 focus:ring-tertiary/20 focus:border-tertiary outline-none transition-all font-body-md text-base"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="p-4 bg-tertiary/5 rounded-2xl border border-tertiary/10 flex gap-3">
+                                <Sparkles className="w-5 h-5 text-tertiary shrink-0" />
+                                <p className="text-xs text-on-tertiary-fixed-variant opacity-70 leading-relaxed">
+                                    Custom meals allow you to plan your day even when you're not using a saved recipe. Great for restaurant nights or quick favorites!
+                                </p>
+                            </div>
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-4 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                            className="flex-1 px-6 py-4 border border-outline-variant text-on-surface-variant rounded-2xl hover:bg-surface-container font-black text-xs uppercase tracking-widest transition-all"
                         >
-                            Cancel
+                            Back
                         </button>
                         <button
                             type="submit"
                             disabled={loading || (mode === 'recipe' ? !selectedRecipe : !customMealName.trim())}
-                            className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shadow-sm"
+                            className="flex-1 px-6 py-4 bg-tertiary hover:bg-tertiary/90 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-tertiary/20 active:scale-95"
                         >
-                            {loading ? 'Adding...' : 'Add Meal'}
+                            {loading ? 'Securing...' : 'Add to Plan'}
                         </button>
                     </div>
                 </form>

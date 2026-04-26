@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, Users, ChefHat, ArrowLeft, Trash2, Calendar } from 'lucide-react';
+import { Clock, Users, ChefHat, ArrowLeft, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -38,7 +38,7 @@ const RecipeDetail = () => {
         try{
             await api.delete(`/recipe/${id}`); 
             toast.success('Recipe deleted successfully');
-            navigate('/recipe');
+            navigate('/recipes');
         } catch (error) {
             console.error('Error deleting recipe:', error);
         }
@@ -60,10 +60,10 @@ const RecipeDetail = () => {
 
      if(loading){
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col">
+            <div className="min-h-screen bg-background flex flex-col">
                 <Navbar />
                 <div className="flex flex-1 items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         )
@@ -77,139 +77,162 @@ const RecipeDetail = () => {
     const originalServings = recipe.servings || 4;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background font-body-md">
             <Navbar />
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-10 pb-24 md:pb-10">
                 {/* Back Button */}
                 <Link
                     to="/recipes"
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+                    className="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface mb-8 transition-colors group"
                 >
-                    <ArrowLeft className="w-5 h-5" />
-                    Back to Recipes
+                    <div className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center group-hover:border-on-surface">
+                        <ArrowLeft className="w-4 h-4" />
+                    </div>
+                    <span className="font-label-bold">Back to Collection</span>
                 </Link>
 
                 {/* Recipe Header */}
-                <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{recipe.name}</h1>
-                            {recipe.description && (
-                                <p className="text-gray-600 text-lg">{recipe.description}</p>
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container p-8 mb-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="flex-1">
+                                <h1 className="font-headline-sm text-4xl text-on-surface font-black tracking-tight leading-tight mb-3">{recipe.name}</h1>
+                                {recipe.description && (
+                                    <p className="text-body-lg text-on-surface-variant opacity-80 max-w-3xl">{recipe.description}</p>
+                                )}
+                            </div>
+                            <button
+                                onClick={handleDelete}
+                                className="p-3 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-xl transition-all"
+                                title="Delete recipe"
+                            >
+                                <Trash2 className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2.5 mb-8">
+                            {recipe.cuisine_type && (
+                                <span className="px-4 py-1.5 bg-primary/10 text-on-primary-fixed-variant rounded-full text-xs font-black uppercase tracking-widest border border-primary/10">
+                                    {recipe.cuisine_type}
+                                </span>
+                            )}
+                            {recipe.difficulty && (
+                                <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border ${
+                                    recipe.difficulty === 'easy' ? 'bg-green-100 text-green-800 border-green-200' :
+                                    recipe.difficulty === 'medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                                    'bg-red-100 text-red-800 border-red-200'
+                                }`}>
+                                    {recipe.difficulty}
+                                </span>
+                            )}
+                            {recipe.dietary_tags && recipe.dietary_tags.map(tag => (
+                                <span key={tag} className="px-4 py-1.5 bg-secondary/10 text-on-secondary-fixed-variant rounded-full text-xs font-black uppercase tracking-widest border border-secondary/10">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap gap-10 py-6 border-t border-surface-container">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-label-bold text-on-surface-variant opacity-50 uppercase tracking-wider mb-1">Total Time</span>
+                                <div className="flex items-center gap-2 text-on-surface font-black">
+                                    <Clock className="w-5 h-5 text-primary" />
+                                    <span>{totalTime} minutes</span>
+                                </div>
+                            </div>
+                            {recipe.prep_time && (
+                                <div className="flex flex-col border-l border-surface-container pl-10">
+                                    <span className="text-xs font-label-bold text-on-surface-variant opacity-50 uppercase tracking-wider mb-1">Prep Time</span>
+                                    <span className="font-black text-on-surface">{recipe.prep_time} min</span>
+                                </div>
+                            )}
+                            {recipe.cook_time && (
+                                <div className="flex flex-col border-l border-surface-container pl-10">
+                                    <span className="text-xs font-label-bold text-on-surface-variant opacity-50 uppercase tracking-wider mb-1">Cook Time</span>
+                                    <span className="font-black text-on-surface">{recipe.cook_time} min</span>
+                                </div>
                             )}
                         </div>
-                        <button
-                            onClick={handleDelete}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {recipe.cuisine_type && (
-                            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
-                                {recipe.cuisine_type}
-                            </span>
-                        )}
-                        {recipe.difficulty && (
-                            <span className={`px-3 py-1.5 rounded-full text-sm font-medium capitalize ${recipe.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
-                                recipe.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-red-100 text-red-700'
-                                }`}>
-                                {recipe.difficulty}
-                            </span>
-                        )}
-                        {recipe.dietary_tags && recipe.dietary_tags.map(tag => (
-                            <span key={tag} className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-
-                    {/* Meta Info */}
-                    <div className="flex flex-wrap gap-6 text-gray-600">
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            <span className="font-medium">{totalTime} minutes</span>
-                        </div>
-                        {recipe.prep_time && (
-                            <div className="text-sm">
-                                Prep: {recipe.prep_time} min
-                            </div>
-                        )}
-                        {recipe.cook_time && (
-                            <div className="text-sm">
-                                Cook: {recipe.cook_time} min
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     {/* Ingredients Section */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-semibold text-gray-900">Ingredients</h2>
+                        <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container p-8 sticky top-10">
+                            <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-600">Servings:</span>
+                                    <span className="material-symbols-outlined text-primary">shopping_basket</span>
+                                    <h2 className="font-headline-md text-headline-md text-on-surface">Ingredients</h2>
                                 </div>
                             </div>
 
                             {/* Servings Adjuster */}
-                            <div className="mb-6">
-                                <div className="flex items-center gap-3">
+                            <div className="mb-10 bg-surface-container-low p-4 rounded-xl border border-surface-container">
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                    <span className="text-xs font-label-bold text-on-surface-variant uppercase tracking-wider">Adjust Yield</span>
+                                    <span className="font-black text-primary">{servings} Servings</span>
+                                </div>
+                                <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => setServings(Math.max(1, servings - 1))}
-                                        className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                                        className="w-10 h-10 flex items-center justify-center bg-white border border-outline-variant hover:border-primary hover:text-primary rounded-lg font-black transition-all active:scale-95"
                                     >
                                         −
                                     </button>
-                                    <span className="text-lg font-semibold text-gray-900 w-12 text-center">
-                                        {servings}
-                                    </span>
+                                    <div className="flex-1 h-2 bg-white rounded-full overflow-hidden border border-outline-variant">
+                                        <div 
+                                            className="h-full bg-primary transition-all duration-300" 
+                                            style={{ width: `${Math.min(100, (servings / 12) * 100)}%` }}
+                                        ></div>
+                                    </div>
                                     <button
                                         onClick={() => setServings(servings + 1)}
-                                        className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                                        className="w-10 h-10 flex items-center justify-center bg-white border border-outline-variant hover:border-primary hover:text-primary rounded-lg font-black transition-all active:scale-95"
                                     >
                                         +
                                     </button>
-                                    {servings !== originalServings && (
-                                        <button
-                                            onClick={() => setServings(originalServings)}
-                                            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                                        >
-                                            Reset
-                                        </button>
-                                    )}
                                 </div>
+                                {servings !== originalServings && (
+                                    <button
+                                        onClick={() => setServings(originalServings)}
+                                        className="w-full text-center mt-4 text-xs font-label-bold text-primary hover:underline"
+                                    >
+                                        Reset to original ({originalServings})
+                                    </button>
+                                )}
                             </div>
 
                             {/* Ingredients List */}
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {recipe.ingredients && recipe.ingredients.map((ingredient, index) => {
                                     const adjustedQty = adjustQuantity(ingredient.quantity, originalServings);
                                     const isChecked = checkedIngredients.has(index);
 
                                     return (
-                                        <label
+                                        <div
                                             key={index}
-                                            className="flex items-start gap-3 cursor-pointer group"
+                                            onClick={() => toggleIngredient(index)}
+                                            className={`flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                                                isChecked 
+                                                    ? 'bg-surface-container border-transparent opacity-60' 
+                                                    : 'bg-white border-outline-variant hover:border-primary/30'
+                                            }`}
                                         >
-                                            <input
-                                                type="checkbox"
-                                                checked={isChecked}
-                                                onChange={() => toggleIngredient(index)}
-                                                className="mt-1 w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
-                                            />
-                                            <span className={`flex-1 ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                                                <span className="font-medium">{adjustedQty}</span> {ingredient.unit} {ingredient.name}
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                                                isChecked ? 'bg-primary border-primary text-white' : 'border-outline-variant bg-white'
+                                            }`}>
+                                                {isChecked && <Plus className="w-3.5 h-3.5 rotate-45" />}
+                                            </div>
+                                            <span className={`flex-1 text-body-md ${isChecked ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+                                                <span className="font-black">{adjustedQty}</span> {ingredient.unit} {ingredient.name}
                                             </span>
-                                        </label>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -217,25 +240,35 @@ const RecipeDetail = () => {
                     </div>
 
                     {/* Instructions Section */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Instructions</h2>
-                            <ol className="space-y-4">
+                    <div className="lg:col-span-2 space-y-10">
+                        <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container p-8">
+                            <div className="flex items-center gap-2 mb-8">
+                                <span className="material-symbols-outlined text-primary">receipt_long</span>
+                                <h2 className="font-headline-md text-headline-md text-on-surface">Cooking Instructions</h2>
+                            </div>
+                            <div className="space-y-8">
                                 {recipe.instructions && recipe.instructions.map((step, index) => (
-                                    <li key={index} className="flex gap-4">
-                                        <span className="shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                                            {index + 1}
-                                        </span>
-                                        <p className="text-gray-700 pt-1 flex-1">{step}</p>
-                                    </li>
+                                    <div key={index} className="flex gap-6 group">
+                                        <div className="shrink-0">
+                                            <span className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                                {index + 1}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 pt-2">
+                                            <p className="text-on-surface text-body-lg leading-relaxed font-body-md">{step}</p>
+                                        </div>
+                                    </div>
                                 ))}
-                            </ol>
+                            </div>
                         </div>
 
                         {/* Nutrition Info */}
                         {recipe.nutrition && (
-                            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Nutrition (per serving)</h2>
+                            <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(26,26,30,0.05)] border border-surface-container p-8">
+                                <div className="flex items-center gap-2 mb-8">
+                                    <span className="material-symbols-outlined text-secondary">analytics</span>
+                                    <h2 className="font-headline-md text-headline-md text-on-surface">Nutritional Information</h2>
+                                </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                                     <NutritionCard label="Calories" value={recipe.nutrition.calories} unit="kcal" />
                                     <NutritionCard label="Protein" value={recipe.nutrition.protein} unit="g" />
@@ -243,21 +276,23 @@ const RecipeDetail = () => {
                                     <NutritionCard label="Fats" value={recipe.nutrition.fats} unit="g" />
                                     <NutritionCard label="Fiber" value={recipe.nutrition.fiber} unit="g" />
                                 </div>
+                                <p className="text-xs text-on-surface-variant opacity-50 mt-6 text-center italic">* Values are estimates based on standard serving sizes.</p>
                             </div>
                         )}
 
                         {/* Cooking Tips */}
                         {recipe.cooking_tips && recipe.cooking_tips.length > 0 && (
-                            <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
-                                <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
-                                    <ChefHat className="w-5 h-5" />
-                                    Cooking Tips
+                            <div className="bg-primary-fixed text-on-primary-fixed rounded-2xl shadow-sm border border-primary-fixed-dim p-8 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-on-primary-fixed/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                                <h3 className="font-headline-md text-headline-md mb-6 flex items-center gap-3 relative z-10">
+                                    <span className="material-symbols-outlined">lightbulb</span>
+                                    Cooking tips!
                                 </h3>
-                                <ul className="space-y-2">
+                                <ul className="space-y-4 relative z-10">
                                     {recipe.cooking_tips.map((tip, index) => (
-                                        <li key={index} className="text-amber-800 text-sm flex gap-2">
-                                            <span className="shrink-0">•</span>
-                                            <span>{tip}</span>
+                                        <li key={index} className="text-body-md leading-relaxed flex gap-4">
+                                            <span className="text-primary font-black mt-1">•</span>
+                                            <span className="opacity-90">{tip}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -266,9 +301,12 @@ const RecipeDetail = () => {
 
                         {/* User Notes */}
                         {recipe.user_notes && (
-                            <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-6">
-                                <h3 className="font-semibold text-emerald-900 mb-2">📝 Notes</h3>
-                                <p className="text-emerald-800">{recipe.user_notes}</p>
+                            <div className="bg-tertiary/5 rounded-2xl border border-tertiary/10 p-8">
+                                <h3 className="font-headline-sm text-headline-sm text-on-tertiary-fixed-variant mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined">edit_note</span>
+                                    My Personal Notes
+                                </h3>
+                                <p className="text-body-md text-on-tertiary-fixed-variant opacity-80 leading-relaxed italic">"{recipe.user_notes}"</p>
                             </div>
                         )}
                     </div>
@@ -279,9 +317,9 @@ const RecipeDetail = () => {
 };
 
 const NutritionCard = ({ label, value, unit }) => (
-    <div className="text-center p-4 bg-gray-50 rounded-lg">
-        <div className="text-2xl font-bold text-gray-900">{value}{unit}</div>
-        <div className="text-sm text-gray-600 mt-1">{label}</div>
+    <div className="text-center p-5 bg-surface-container-low rounded-2xl border border-surface-container hover:border-secondary/30 transition-colors">
+        <div className="text-2xl font-black text-on-surface tracking-tighter">{value}{unit}</div>
+        <div className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60 mt-2">{label}</div>
     </div>
 );
 
